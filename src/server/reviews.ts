@@ -2,7 +2,8 @@ import { createServerFn } from '@tanstack/react-start'
 import { desc, eq } from 'drizzle-orm'
 import { z } from 'zod'
 import { getDb } from '@/lib/db'
-import { reviews } from '@/db/schema'
+import { reviews, products } from '@/db/schema'
+import { requireAdmin } from '@/server/admin'
 
 export const listReviews = createServerFn({ method: 'GET' })
   .validator((productId: string) => productId)
@@ -32,4 +33,24 @@ export const addReview = createServerFn({ method: 'POST' })
       createdAt: new Date().toISOString(),
     })
     return { id }
+  })
+
+// --- Admin: review moderation --------------------------------------------------------------
+
+export const adminListReviews = createServerFn({ method: 'GET' }).handler(async () => {
+  await requireAdmin()
+  const db = await getDb()
+  const allReviews = await db.select().from(reviews).orderBy(desc(reviews.createdAt))
+  const allProducts = await db.select({ id: products.id, name: products.name, brand: products.brand }).from(products)
+  const byId = new Map(allProducts.map((p) => [p.id, p]))
+  return allReviews.map((r) => ({ ...r, productName: byId.get(r.productId)?.name ?? 'Unknown product' }))
+})
+
+export const adminDeleteReview = createServerFn({ method: 'POST' })
+  .validator((id: string) => id)
+  .handler(async ({ data: id }) => {
+    await requireAdmin()
+    const db = await getDb()
+    await db.delete(reviews).where(eq(reviews.id, id))
+    return { ok: true }
   })

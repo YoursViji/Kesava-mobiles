@@ -4,6 +4,9 @@ import { z } from 'zod'
 import { getDb } from '@/lib/db'
 import { preLaunches, preBookings } from '@/db/schema'
 import { sendEmail } from '@/lib/email'
+import { requireAdmin } from '@/server/admin'
+
+export const PRE_BOOKING_STATUSES = ['pending', 'notified', 'converted', 'cancelled'] as const
 
 export const listUpcomingLaunches = createServerFn({ method: 'GET' }).handler(async () => {
   const db = await getDb()
@@ -66,4 +69,21 @@ export const createPreBooking = createServerFn({ method: 'POST' })
     }
 
     return { id, bookingCode, tokenAmount: launch.tokenAmount, launchName: launch.name }
+  })
+
+// --- Admin: pre-bookings -----------------------------------------------------------------------
+
+export const adminListPreBookings = createServerFn({ method: 'GET' }).handler(async () => {
+  await requireAdmin()
+  const db = await getDb()
+  return db.select().from(preBookings).orderBy(desc(preBookings.createdAt))
+})
+
+export const adminUpdatePreBookingStatus = createServerFn({ method: 'POST' })
+  .validator(z.object({ id: z.string(), status: z.enum(PRE_BOOKING_STATUSES) }))
+  .handler(async ({ data }) => {
+    await requireAdmin()
+    const db = await getDb()
+    await db.update(preBookings).set({ status: data.status }).where(eq(preBookings.id, data.id))
+    return { ok: true }
   })

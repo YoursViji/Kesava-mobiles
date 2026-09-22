@@ -1,5 +1,5 @@
 import { Link } from '@tanstack/react-router'
-import { Wrench, Phone, Menu, X, ShoppingBag } from 'lucide-react'
+import { Wrench, Phone, Menu, X, ShoppingBag, ShieldCheck } from 'lucide-react'
 import { useState } from 'react'
 import { STORE } from '@/data/store'
 import { useLang } from '@/lib/i18n'
@@ -62,6 +62,12 @@ export function Header() {
           >
             <Phone size={15} /> {STORE.phoneDisplay}
           </a>
+          <Link
+            to="/admin/login"
+            className="flex items-center gap-1.5 rounded-full border border-neutral-200 px-3 py-2 text-sm font-semibold text-neutral-600 hover:border-brand-400 hover:text-brand-600"
+          >
+            <ShieldCheck size={16} /> Admin
+          </Link>
         </div>
 
         <div className="flex items-center gap-2 lg:hidden">

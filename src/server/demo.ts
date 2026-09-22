@@ -1,8 +1,11 @@
 import { createServerFn } from '@tanstack/react-start'
-import { eq } from 'drizzle-orm'
+import { desc, eq } from 'drizzle-orm'
 import { z } from 'zod'
 import { getDb } from '@/lib/db'
 import { demoBookings } from '@/db/schema'
+import { requireAdmin } from '@/server/admin'
+
+export const DEMO_STATUSES = ['confirmed', 'completed', 'cancelled'] as const
 
 function makeBookingCode() {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
@@ -46,4 +49,21 @@ export const createDemoBooking = createServerFn({ method: 'POST' })
       createdAt: new Date().toISOString(),
     })
     return { id, bookingCode }
+  })
+
+// --- Admin: demo bookings ----------------------------------------------------------------------
+
+export const adminListDemoBookings = createServerFn({ method: 'GET' }).handler(async () => {
+  await requireAdmin()
+  const db = await getDb()
+  return db.select().from(demoBookings).orderBy(desc(demoBookings.createdAt))
+})
+
+export const adminUpdateDemoStatus = createServerFn({ method: 'POST' })
+  .validator(z.object({ id: z.string(), status: z.enum(DEMO_STATUSES) }))
+  .handler(async ({ data }) => {
+    await requireAdmin()
+    const db = await getDb()
+    await db.update(demoBookings).set({ status: data.status }).where(eq(demoBookings.id, data.id))
+    return { ok: true }
   })

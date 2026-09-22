@@ -1,9 +1,12 @@
 import { createServerFn } from '@tanstack/react-start'
-import { eq } from 'drizzle-orm'
+import { desc, eq } from 'drizzle-orm'
 import { z } from 'zod'
 import { getDb } from '@/lib/db'
 import { exchangeLeads } from '@/db/schema'
 import { EXCHANGE_BRANDS, EXCHANGE_CONDITIONS, estimateExchangeValue } from '@/lib/exchangeEstimate'
+import { requireAdmin } from '@/server/admin'
+
+export const EXCHANGE_LEAD_STATUSES = ['new', 'contacted', 'converted', 'expired'] as const
 
 function makeClaimCode() {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
@@ -47,4 +50,21 @@ export const claimExchangeEstimate = createServerFn({ method: 'POST' })
       createdAt: new Date().toISOString(),
     })
     return { claimCode, estimatedValue }
+  })
+
+// --- Admin: exchange leads ---------------------------------------------------------------------
+
+export const adminListExchangeLeads = createServerFn({ method: 'GET' }).handler(async () => {
+  await requireAdmin()
+  const db = await getDb()
+  return db.select().from(exchangeLeads).orderBy(desc(exchangeLeads.createdAt))
+})
+
+export const adminUpdateExchangeStatus = createServerFn({ method: 'POST' })
+  .validator(z.object({ id: z.string(), status: z.enum(EXCHANGE_LEAD_STATUSES) }))
+  .handler(async ({ data }) => {
+    await requireAdmin()
+    const db = await getDb()
+    await db.update(exchangeLeads).set({ status: data.status }).where(eq(exchangeLeads.id, data.id))
+    return { ok: true }
   })

@@ -1,9 +1,10 @@
 import { createServerFn } from '@tanstack/react-start'
-import { eq } from 'drizzle-orm'
+import { desc, eq } from 'drizzle-orm'
 import { z } from 'zod'
 import { getDb } from '@/lib/db'
 import { orderItems, orders } from '@/db/schema'
 import { sendEmail } from '@/lib/email'
+import { requireAdmin } from '@/server/admin'
 
 function makeOrderCode() {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
@@ -74,3 +75,19 @@ export const createOrder = createServerFn({ method: 'POST' })
 
     return { id, orderCode, totalAmount }
   })
+
+// --- Admin: sales ----------------------------------------------------------------------------
+
+export const adminListOrders = createServerFn({ method: 'GET' }).handler(async () => {
+  await requireAdmin()
+  const db = await getDb()
+  const allOrders = await db.select().from(orders).orderBy(desc(orders.createdAt))
+  const allItems = await db.select().from(orderItems)
+  const itemsByOrder = new Map<string, typeof allItems>()
+  for (const item of allItems) {
+    const list = itemsByOrder.get(item.orderId) ?? []
+    list.push(item)
+    itemsByOrder.set(item.orderId, list)
+  }
+  return allOrders.map((order) => ({ ...order, items: itemsByOrder.get(order.id) ?? [] }))
+})

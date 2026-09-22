@@ -1,10 +1,13 @@
 import { createServerFn } from '@tanstack/react-start'
-import { eq } from 'drizzle-orm'
+import { desc, eq } from 'drizzle-orm'
 import { z } from 'zod'
 import { getDb } from '@/lib/db'
 import { serviceBookings, serviceUpdates } from '@/db/schema'
 import { sendEmail } from '@/lib/email'
 import { currentUser } from '@/lib/session.server'
+import { requireAdmin } from '@/server/admin'
+
+export const SERVICE_STATUSES = ['received', 'diagnosed', 'quoted', 'repairing', 'ready', 'completed'] as const
 
 const SERVICE_TYPES = [
   'Screen Repair',
@@ -142,6 +145,52 @@ export const payServiceBooking = createServerFn({ method: 'POST' })
       bookingId: booking.id,
       status: 'repairing',
       note: `Payment of ₹${booking.quoteAmount} received. Repair started.`,
+      createdAt: now,
+    })
+    return { ok: true }
+  })
+
+// --- Admin: service desk --------------------------------------------------------------------
+
+export const adminListServiceBookings = createServerFn({ method: 'GET' }).handler(async () => {
+  await requireAdmin()
+  const db = await getDb()
+  return db.select().from(serviceBookings).orderBy(desc(serviceBookings.createdAt))
+})
+
+const adminUpdateSchema = z.object({
+  id: z.string(),
+  status: z.enum(SERVICE_STATUSES),
+  quoteAmount: z.number().nonnegative().optional(),
+  note: z.string().optional(),
+})
+
+/** Moves a booking through received → diagnosed → quoted → repairing → ready → completed, and can
+ * attach the repair quote the moment it is ready. Every change is also logged to service_updates so
+ * the customer's tracking timeline shows it immediately. */
+export const adminUpdateServiceStatus = createServerFn({ method: 'POST' })
+  .validator(adminUpdateSchema)
+  .handler(async ({ data }) => {
+    await requireAdmin()
+    const db = await getDb()
+    const booking = await db.select().from(serviceBookings).where(eq(serviceBookings.id, data.id)).get()
+    if (!booking) throw new Error('Booking not found')
+    const now = new Date().toISOString()
+    await db
+      .update(serviceBookings)
+      .set({
+        status: data.status,
+        quoteAmount: data.quoteAmount ?? booking.quoteAmount,
+        updatedAt: now,
+      })
+      .where(eq(serviceBookings.id, data.id))
+    await db.insert(serviceUpdates).values({
+      id: crypto.randomUUID(),
+      bookingId: data.id,
+      status: data.status,
+      note:
+        data.note ||
+        (data.quoteAmount ? `Quote shared: ₹${data.quoteAmount.toLocaleString('en-IN')}.` : `Status updated to ${data.status}.`),
       createdAt: now,
     })
     return { ok: true }

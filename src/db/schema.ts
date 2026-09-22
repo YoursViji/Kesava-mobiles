@@ -93,9 +93,21 @@ export const preBookings = sqliteTable('pre_bookings', {
   phone: text('phone').notNull(),
   email: text('email'),
   tokenAmount: real('token_amount').notNull(),
+  status: text('status').notNull().default('pending'),
   createdAt: text('created_at').notNull(),
 })
 export type PreBooking = typeof preBookings.$inferSelect
+
+export const promotions = sqliteTable('promotions', {
+  id: text('id').primaryKey(),
+  title: text('title').notNull(),
+  text: text('text').notNull(),
+  icon: text('icon').notNull().default('badge-percent'),
+  active: integer('active', { mode: 'boolean' }).notNull().default(true),
+  sortOrder: integer('sort_order').notNull().default(0),
+  createdAt: text('created_at').notNull(),
+})
+export type Promotion = typeof promotions.$inferSelect
 
 export const serviceUpdates = sqliteTable('service_updates', {
   id: text('id').primaryKey(),
@@ -137,6 +149,7 @@ export const exchangeLeads = sqliteTable('exchange_leads', {
   purchaseYear: integer('purchase_year').notNull(),
   condition: text('condition').notNull(),
   estimatedValue: real('estimated_value').notNull(),
+  status: text('status').notNull().default('new'),
   createdAt: text('created_at').notNull(),
 })
 export type ExchangeLead = typeof exchangeLeads.$inferSelect
