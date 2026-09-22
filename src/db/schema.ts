@@ -126,6 +126,10 @@ export const orders = sqliteTable('orders', {
   totalAmount: real('total_amount').notNull(),
   status: text('status').notNull().default('pending'),
   createdAt: text('created_at').notNull(),
+  deliveryMode: text('delivery_mode').notNull().default('pickup'),
+  deliveryAddress: text('delivery_address'),
+  deliveryFee: real('delivery_fee').notNull().default(0),
+  deliveryStatus: text('delivery_status'),
 })
 export type Order = typeof orders.$inferSelect
 
@@ -163,3 +167,13 @@ export const reviews = sqliteTable('reviews', {
   createdAt: text('created_at').notNull(),
 })
 export type Review = typeof reviews.$inferSelect
+
+export const loyaltyAccounts = sqliteTable('loyalty_accounts', {
+  id: text('id').primaryKey(),
+  phone: text('phone').notNull().unique(),
+  points: integer('points').notNull().default(0),
+  referralCode: text('referral_code').notNull().unique(),
+  usedReferralCode: text('used_referral_code'),
+  createdAt: text('created_at').notNull(),
+})
+export type LoyaltyAccount = typeof loyaltyAccounts.$inferSelect

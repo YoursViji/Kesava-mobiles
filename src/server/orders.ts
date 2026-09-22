@@ -5,6 +5,7 @@ import { getDb } from '@/lib/db'
 import { orderItems, orders } from '@/db/schema'
 import { sendEmail } from '@/lib/email'
 import { requireAdmin } from '@/server/admin'
+import { awardLoyaltyPoints } from '@/server/loyalty'
 
 function makeOrderCode() {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
@@ -13,6 +14,9 @@ function makeOrderCode() {
   return `KM-ORD-${code}`
 }
 
+export const DELIVERY_STATUSES = ['processing', 'shipped', 'delivered'] as const
+export const HOME_DELIVERY_FEE = 99
+
 const itemSchema = z.object({
   productId: z.string(),
   name: z.string(),
@@ -20,17 +24,26 @@ const itemSchema = z.object({
   quantity: z.number().int().positive(),
 })
 
-const orderSchema = z.object({
-  customerName: z.string().min(2, 'Please enter your name'),
-  phone: z.string().min(10, 'Please enter a valid 10-digit phone number').max(15),
-  items: z.array(itemSchema).min(1, 'Your cart is empty'),
-})
+const orderSchema = z
+  .object({
+    customerName: z.string().min(2, 'Please enter your name'),
+    phone: z.string().min(10, 'Please enter a valid 10-digit phone number').max(15),
+    items: z.array(itemSchema).min(1, 'Your cart is empty'),
+    deliveryMode: z.enum(['pickup', 'delivery']).default('pickup'),
+    deliveryAddress: z.string().optional().or(z.literal('')),
+  })
+  .refine((data) => data.deliveryMode !== 'delivery' || (data.deliveryAddress && data.deliveryAddress.trim().length > 4), {
+    message: 'Please enter your delivery address',
+    path: ['deliveryAddress'],
+  })
 
 export const createOrder = createServerFn({ method: 'POST' })
   .validator(orderSchema)
   .handler(async ({ data }) => {
     const db = await getDb()
-    const totalAmount = data.items.reduce((sum, i) => sum + i.price * i.quantity, 0)
+    const itemsTotal = data.items.reduce((sum, i) => sum + i.price * i.quantity, 0)
+    const deliveryFee = data.deliveryMode === 'delivery' ? HOME_DELIVERY_FEE : 0
+    const totalAmount = itemsTotal + deliveryFee
     let orderCode = makeOrderCode()
     let clash = await db.select().from(orders).where(eq(orders.orderCode, orderCode)).get()
     let attempts = 0
@@ -49,6 +62,10 @@ export const createOrder = createServerFn({ method: 'POST' })
       totalAmount,
       status: 'pending',
       createdAt: now,
+      deliveryMode: data.deliveryMode,
+      deliveryAddress: data.deliveryMode === 'delivery' ? data.deliveryAddress || null : null,
+      deliveryFee,
+      deliveryStatus: data.deliveryMode === 'delivery' ? 'processing' : null,
     })
     await db.insert(orderItems).values(
       data.items.map((item) => ({
@@ -64,16 +81,22 @@ export const createOrder = createServerFn({ method: 'POST' })
     try {
       await sendEmail({
         to: 'store@kesavamobiles.local',
-        subject: `New pickup order ${orderCode}`,
-        text: `${data.customerName} (${data.phone}) placed an order for ₹${totalAmount.toLocaleString('en-IN')}.\n\n${data.items
-          .map((i) => `${i.quantity} x ${i.name} — ₹${i.price.toLocaleString('en-IN')}`)
-          .join('\n')}`,
+        subject: `New ${data.deliveryMode === 'delivery' ? 'home delivery' : 'pickup'} order ${orderCode}`,
+        text: `${data.customerName} (${data.phone}) placed an order for ₹${totalAmount.toLocaleString('en-IN')}.\n${
+          data.deliveryMode === 'delivery' ? `Deliver to: ${data.deliveryAddress}\n` : ''
+        }\n${data.items.map((i) => `${i.quantity} x ${i.name} — ₹${i.price.toLocaleString('en-IN')}`).join('\n')}`,
       })
     } catch {
       // The order is already saved; a notification failure should not fail the checkout.
     }
 
-    return { id, orderCode, totalAmount }
+    try {
+      await awardLoyaltyPoints(data.phone, totalAmount)
+    } catch {
+      // Loyalty points are a bonus; never let this fail a successful order.
+    }
+
+    return { id, orderCode, totalAmount, deliveryMode: data.deliveryMode, deliveryFee }
   })
 
 // --- Admin: sales ----------------------------------------------------------------------------
@@ -91,3 +114,12 @@ export const adminListOrders = createServerFn({ method: 'GET' }).handler(async (
   }
   return allOrders.map((order) => ({ ...order, items: itemsByOrder.get(order.id) ?? [] }))
 })
+
+export const adminUpdateDeliveryStatus = createServerFn({ method: 'POST' })
+  .validator(z.object({ id: z.string(), deliveryStatus: z.enum(DELIVERY_STATUSES) }))
+  .handler(async ({ data }) => {
+    await requireAdmin()
+    const db = await getDb()
+    await db.update(orders).set({ deliveryStatus: data.deliveryStatus }).where(eq(orders.id, data.id))
+    return { ok: true }
+  })
