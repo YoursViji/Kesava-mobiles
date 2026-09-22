@@ -19,7 +19,9 @@ export const Route = createFileRoute('/offers')({
 function OffersPage() {
   const { products, promotions } = Route.useLoaderData()
   const { t } = useLang()
-  const deals = products.filter((p) => p.discountPercent > 0).sort((a, b) => b.discountPercent - a.discountPercent)
+  const deals = products
+    .filter((p) => p.category === 'Smartphone' && p.discountPercent > 0)
+    .sort((a, b) => b.discountPercent - a.discountPercent)
 
   const fallbackPromos = [
     { id: 'fallback-exchange', icon: 'repeat', title: t('offer_exchange_title'), text: t('offer_exchange_text') },
