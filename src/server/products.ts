@@ -3,7 +3,7 @@ import { asc, desc, eq } from 'drizzle-orm'
 import { z } from 'zod'
 import { getDb } from '@/lib/db'
 import { products } from '@/db/schema'
-import { requireAdmin } from '@/server/admin'
+import { requireAdmin } from '@/server/admin-guard.server'
 
 export const listProducts = createServerFn({ method: 'GET' }).handler(async () => {
   const db = await getDb()

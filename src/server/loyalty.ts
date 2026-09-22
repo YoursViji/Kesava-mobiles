@@ -38,18 +38,6 @@ async function ensureAccount(db: Awaited<ReturnType<typeof getDb>>, phone: strin
   return row
 }
 
-/** Plain helper (not a server function) that other server functions call after a purchase or a
- * completed, paid repair to credit the customer's phone number with points. Never fails the
- * purchase itself — call sites should treat a thrown error here as best-effort. */
-export async function awardLoyaltyPoints(phone: string, amountSpent: number) {
-  if (amountSpent <= 0) return
-  const db = await getDb()
-  const account = await ensureAccount(db, phone)
-  const earned = Math.floor(amountSpent / RUPEES_PER_POINT)
-  if (earned <= 0) return
-  await db.update(loyaltyAccounts).set({ points: account.points + earned }).where(eq(loyaltyAccounts.id, account.id))
-}
-
 export const getLoyaltyStatus = createServerFn({ method: 'GET' })
   .validator((phone: string) => phone.trim())
   .handler(async ({ data: phone }) => {

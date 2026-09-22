@@ -5,23 +5,9 @@ import { getDb } from '@/lib/db'
 import { serviceBookings, serviceUpdates } from '@/db/schema'
 import { sendEmail } from '@/lib/email'
 import { currentUser } from '@/lib/session.server'
-import { requireAdmin } from '@/server/admin'
-import { awardLoyaltyPoints } from '@/server/loyalty'
-
-export const SERVICE_STATUSES = ['received', 'diagnosed', 'quoted', 'repairing', 'ready', 'completed'] as const
-
-const SERVICE_TYPES = [
-  'Screen Repair',
-  'Battery Replacement',
-  'Charging Port Issue',
-  'Water Damage',
-  'Software / OS Issue',
-  'Camera Repair',
-  'Speaker / Mic Issue',
-  'Other',
-] as const
-
-export const serviceTypes = SERVICE_TYPES
+import { requireAdmin } from '@/server/admin-guard.server'
+import { awardLoyaltyPoints } from '@/server/loyalty-award.server'
+import { DELIVERY_MODES, SERVICE_STATUSES, SERVICE_TYPES } from '@/data/options'
 
 function makeTrackingCode() {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
@@ -29,9 +15,6 @@ function makeTrackingCode() {
   for (let i = 0; i < 6; i++) code += chars[Math.floor(Math.random() * chars.length)]
   return `KM-${code}`
 }
-
-const DELIVERY_MODES = ['store_dropoff', 'doorstep'] as const
-export const deliveryModes = DELIVERY_MODES
 
 const bookingSchema = z
   .object({

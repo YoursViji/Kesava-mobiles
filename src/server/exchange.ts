@@ -4,9 +4,8 @@ import { z } from 'zod'
 import { getDb } from '@/lib/db'
 import { exchangeLeads } from '@/db/schema'
 import { EXCHANGE_BRANDS, EXCHANGE_CONDITIONS, estimateExchangeValue } from '@/lib/exchangeEstimate'
-import { requireAdmin } from '@/server/admin'
-
-export const EXCHANGE_LEAD_STATUSES = ['new', 'contacted', 'converted', 'expired'] as const
+import { requireAdmin } from '@/server/admin-guard.server'
+import { EXCHANGE_LEAD_STATUSES } from '@/data/options'
 
 function makeClaimCode() {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'

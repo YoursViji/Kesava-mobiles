@@ -4,11 +4,9 @@ import { getDb } from '@/lib/db'
 import { getAuth } from '@/lib/auth'
 import { currentUser } from '@/lib/session.server'
 import { user as userTable, products, orders, serviceBookings, preBookings, demoBookings } from '@/db/schema'
+import { ADMIN_EMAIL } from '@/data/options'
+import { requireAdmin } from '@/server/admin-guard.server'
 
-// Static credentials the store owner asked for. The account itself is a real Better Auth user
-// (created on first visit to /admin/login if it does not exist yet) so sign-in, sessions and
-// password storage all go through Better Auth rather than anything hand-rolled here.
-export const ADMIN_EMAIL = 'kesava@gmail.com'
 const ADMIN_PASSWORD = 'Admin@kesava-mobiles'
 const ADMIN_NAME = 'Kesava Mobiles Admin'
 
@@ -39,16 +37,6 @@ export const checkIsAdmin = createServerFn({ method: 'GET' }).handler(async () =
   const row = await db.select().from(userTable).where(eq(userTable.id, authedUser.id)).get()
   return { isAdmin: row?.role === 'admin' }
 })
-
-/** Guard for every admin server function: throws unless the signed-in user carries the admin role. */
-export async function requireAdmin() {
-  const authedUser = await currentUser()
-  if (!authedUser) throw new Error('Please sign in to continue')
-  const db = await getDb()
-  const row = await db.select().from(userTable).where(eq(userTable.id, authedUser.id)).get()
-  if (row?.role !== 'admin') throw new Error('Your account is not authorized to view the admin panel')
-  return authedUser
-}
 
 export const adminDashboardStats = createServerFn({ method: 'GET' }).handler(async () => {
   await requireAdmin()

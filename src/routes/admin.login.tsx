@@ -4,7 +4,8 @@ import { ShieldCheck } from 'lucide-react'
 import { authClient } from '@/lib/auth-client'
 import { useAction } from '@/lib/actions'
 import { getSessionUser } from '@/lib/session'
-import { ensureAdminAccount, checkIsAdmin, ADMIN_EMAIL } from '@/server/admin'
+import { ensureAdminAccount, checkIsAdmin } from '@/server/admin'
+import { ADMIN_EMAIL } from '@/data/options'
 
 export const Route = createFileRoute('/admin/login')({
   component: AdminLoginPage,

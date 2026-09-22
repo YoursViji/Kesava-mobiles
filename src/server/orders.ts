@@ -4,8 +4,9 @@ import { z } from 'zod'
 import { getDb } from '@/lib/db'
 import { orderItems, orders } from '@/db/schema'
 import { sendEmail } from '@/lib/email'
-import { requireAdmin } from '@/server/admin'
-import { awardLoyaltyPoints } from '@/server/loyalty'
+import { requireAdmin } from '@/server/admin-guard.server'
+import { awardLoyaltyPoints } from '@/server/loyalty-award.server'
+import { DELIVERY_STATUSES, HOME_DELIVERY_FEE } from '@/data/options'
 
 function makeOrderCode() {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
@@ -13,9 +14,6 @@ function makeOrderCode() {
   for (let i = 0; i < 6; i++) code += chars[Math.floor(Math.random() * chars.length)]
   return `KM-ORD-${code}`
 }
-
-export const DELIVERY_STATUSES = ['processing', 'shipped', 'delivered'] as const
-export const HOME_DELIVERY_FEE = 99
 
 const itemSchema = z.object({
   productId: z.string(),

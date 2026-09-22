@@ -3,9 +3,8 @@ import { desc, eq } from 'drizzle-orm'
 import { z } from 'zod'
 import { getDb } from '@/lib/db'
 import { demoBookings } from '@/db/schema'
-import { requireAdmin } from '@/server/admin'
-
-export const DEMO_STATUSES = ['confirmed', 'completed', 'cancelled'] as const
+import { requireAdmin } from '@/server/admin-guard.server'
+import { DEMO_STATUSES } from '@/data/options'
 
 function makeBookingCode() {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'

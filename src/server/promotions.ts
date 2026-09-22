@@ -3,9 +3,8 @@ import { asc, eq } from 'drizzle-orm'
 import { z } from 'zod'
 import { getDb } from '@/lib/db'
 import { promotions } from '@/db/schema'
-import { requireAdmin } from '@/server/admin'
-
-export const PROMO_ICONS = ['repeat', 'landmark', 'badge-percent', 'sparkles', 'shield-check'] as const
+import { requireAdmin } from '@/server/admin-guard.server'
+import { PROMO_ICONS } from '@/data/options'
 
 export const listActivePromotions = createServerFn({ method: 'GET' }).handler(async () => {
   const db = await getDb()

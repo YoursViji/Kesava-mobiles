@@ -3,7 +3,7 @@ import { desc, eq } from 'drizzle-orm'
 import { z } from 'zod'
 import { getDb } from '@/lib/db'
 import { reviews, products } from '@/db/schema'
-import { requireAdmin } from '@/server/admin'
+import { requireAdmin } from '@/server/admin-guard.server'
 
 export const listReviews = createServerFn({ method: 'GET' })
   .validator((productId: string) => productId)

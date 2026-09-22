@@ -4,9 +4,8 @@ import { z } from 'zod'
 import { getDb } from '@/lib/db'
 import { preLaunches, preBookings } from '@/db/schema'
 import { sendEmail } from '@/lib/email'
-import { requireAdmin } from '@/server/admin'
-
-export const PRE_BOOKING_STATUSES = ['pending', 'notified', 'converted', 'cancelled'] as const
+import { requireAdmin } from '@/server/admin-guard.server'
+import { PRE_BOOKING_STATUSES } from '@/data/options'
 
 export const listUpcomingLaunches = createServerFn({ method: 'GET' }).handler(async () => {
   const db = await getDb()
