@@ -25,6 +25,7 @@ export function Footer() {
             <li><Link to="/compare" className="hover:text-white">{t('nav_compare')}</Link></li>
             <li><Link to="/exchange" className="hover:text-white">{t('nav_exchange')}</Link></li>
             <li><Link to="/cart" className="hover:text-white">{t('cart_title')}</Link></li>
+            <li><Link to="/loyalty" className="hover:text-white">{t('nav_loyalty')}</Link></li>
           </ul>
         </div>
         <div>

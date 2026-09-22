@@ -16,6 +16,7 @@ import { getBookingByCode, payServiceBooking } from '@/server/service'
 import { useAction } from '@/lib/actions'
 import { useLang } from '@/lib/i18n'
 import { cn } from '@/lib/utils'
+import { WhatsAppButton } from '@/components/WhatsAppButton'
 
 const searchSchema = z.object({ code: z.string().optional() })
 
@@ -105,6 +106,12 @@ function TrackPage() {
               </span>
             </div>
             <p className="mt-3 rounded-xl bg-neutral-50 p-3 text-sm text-neutral-600">"{result.booking.issueDescription}"</p>
+            <div className="mt-3">
+              <WhatsAppButton
+                label={t('whatsapp_ask_service')}
+                message={`Hi, I'd like an update on my repair ${result.booking.trackingCode} (${result.booking.deviceBrand} ${result.booking.deviceModel}).`}
+              />
+            </div>
 
             <div className="mt-6 flex items-center overflow-x-auto pb-1">
               {STEPS.map((s, i) => {

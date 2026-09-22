@@ -16,6 +16,7 @@ import { Route as ContactRouteImport } from './routes/contact'
 import { Route as ExchangeRouteImport } from './routes/exchange'
 import { Route as LaunchesRouteImport } from './routes/launches'
 import { Route as LlmsDottxtRouteImport } from './routes/llms[.]txt'
+import { Route as LoyaltyRouteImport } from './routes/loyalty'
 import { Route as OffersRouteImport } from './routes/offers'
 import { Route as RobotsDottxtRouteImport } from './routes/robots[.]txt'
 import { Route as ServiceRouteImport } from './routes/service'
@@ -73,6 +74,11 @@ const LaunchesRoute = LaunchesRouteImport.update({
 const LlmsDottxtRoute = LlmsDottxtRouteImport.update({
   id: '/llms.txt',
   path: '/llms.txt',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoyaltyRoute = LoyaltyRouteImport.update({
+  id: '/loyalty',
+  path: '/loyalty',
   getParentRoute: () => rootRouteImport,
 } as any)
 const OffersRoute = OffersRouteImport.update({
@@ -199,6 +205,7 @@ export interface FileRoutesByFullPath {
   '/exchange': typeof ExchangeRoute
   '/launches': typeof LaunchesRoute
   '/llms.txt': typeof LlmsDottxtRoute
+  '/loyalty': typeof LoyaltyRoute
   '/offers': typeof OffersRoute
   '/robots.txt': typeof RobotsDottxtRoute
   '/service': typeof ServiceRouteWithChildren
@@ -231,6 +238,7 @@ export interface FileRoutesByTo {
   '/exchange': typeof ExchangeRoute
   '/launches': typeof LaunchesRoute
   '/llms.txt': typeof LlmsDottxtRoute
+  '/loyalty': typeof LoyaltyRoute
   '/offers': typeof OffersRoute
   '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -263,6 +271,7 @@ export interface FileRoutesById {
   '/exchange': typeof ExchangeRoute
   '/launches': typeof LaunchesRoute
   '/llms.txt': typeof LlmsDottxtRoute
+  '/loyalty': typeof LoyaltyRoute
   '/offers': typeof OffersRoute
   '/robots.txt': typeof RobotsDottxtRoute
   '/service': typeof ServiceRouteWithChildren
@@ -297,6 +306,7 @@ export interface FileRouteTypes {
     | '/exchange'
     | '/launches'
     | '/llms.txt'
+    | '/loyalty'
     | '/offers'
     | '/robots.txt'
     | '/service'
@@ -329,6 +339,7 @@ export interface FileRouteTypes {
     | '/exchange'
     | '/launches'
     | '/llms.txt'
+    | '/loyalty'
     | '/offers'
     | '/robots.txt'
     | '/sitemap.xml'
@@ -360,6 +371,7 @@ export interface FileRouteTypes {
     | '/exchange'
     | '/launches'
     | '/llms.txt'
+    | '/loyalty'
     | '/offers'
     | '/robots.txt'
     | '/service'
@@ -393,6 +405,7 @@ export interface RootRouteChildren {
   ExchangeRoute: typeof ExchangeRoute
   LaunchesRoute: typeof LaunchesRoute
   LlmsDottxtRoute: typeof LlmsDottxtRoute
+  LoyaltyRoute: typeof LoyaltyRoute
   OffersRoute: typeof OffersRoute
   RobotsDottxtRoute: typeof RobotsDottxtRoute
   ServiceRoute: typeof ServiceRouteWithChildren
@@ -465,6 +478,13 @@ declare module '@tanstack/react-router' {
       path: '/llms.txt'
       fullPath: '/llms.txt'
       preLoaderRoute: typeof LlmsDottxtRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/loyalty': {
+      id: '/loyalty'
+      path: '/loyalty'
+      fullPath: '/loyalty'
+      preLoaderRoute: typeof LoyaltyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/offers': {
@@ -652,6 +672,7 @@ const rootRouteChildren: RootRouteChildren = {
   ExchangeRoute: ExchangeRoute,
   LaunchesRoute: LaunchesRoute,
   LlmsDottxtRoute: LlmsDottxtRoute,
+  LoyaltyRoute: LoyaltyRoute,
   OffersRoute: OffersRoute,
   RobotsDottxtRoute: RobotsDottxtRoute,
   ServiceRoute: ServiceRouteWithChildren,

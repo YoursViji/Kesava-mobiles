@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { Minus, Plus, ShoppingBag, Trash2, CheckCircle2, Store } from 'lucide-react'
 import { useCart } from '@/lib/cart'
 import { useAction } from '@/lib/actions'
-import { createOrder } from '@/server/orders'
+import { createOrder, HOME_DELIVERY_FEE } from '@/server/orders'
 import { STORE } from '@/data/store'
 import { useLang } from '@/lib/i18n'
 import { cn } from '@/lib/utils'
@@ -14,7 +14,9 @@ function CartPage() {
   const cart = useCart()
   const { t } = useLang()
   const [form, setForm] = useState({ customerName: '', phone: '' })
-  const [confirmed, setConfirmed] = useState<{ orderCode: string; totalAmount: number } | null>(null)
+  const [deliveryMode, setDeliveryMode] = useState<'pickup' | 'delivery'>('pickup')
+  const [deliveryAddress, setDeliveryAddress] = useState('')
+  const [confirmed, setConfirmed] = useState<{ orderCode: string; totalAmount: number; deliveryMode: 'pickup' | 'delivery'; deliveryFee: number } | null>(null)
 
   const place = useAction(createOrder, {
     onSuccess: (data) => {
@@ -22,6 +24,8 @@ function CartPage() {
       cart.clear()
     },
   })
+
+  const grandTotal = cart.totalPrice + (deliveryMode === 'delivery' ? HOME_DELIVERY_FEE : 0)
 
   if (!cart.loaded) {
     return (
@@ -45,6 +49,10 @@ function CartPage() {
         <p className="mt-3 text-sm text-neutral-500">
           {t('order_total_label')}: <span className="font-semibold text-neutral-800">₹{confirmed.totalAmount.toLocaleString('en-IN')}</span>
         </p>
+        {confirmed.deliveryMode === 'delivery' ? (
+          <p className="mt-2 text-sm text-neutral-500">{t('order_delivery_note')}</p>
+        ) : null}
+        <p className="mt-3 text-xs text-brand-600">{t('loyalty_points_earned_note')}</p>
         <div className="mt-6 flex flex-wrap justify-center gap-3">
           <Link to="/mobiles" className="rounded-full bg-brand-600 px-5 py-2.5 text-sm font-bold text-white">
             {t('continue_shopping')}
@@ -123,9 +131,46 @@ function CartPage() {
             <span>{cart.totalItems} {t('items_label')}</span>
             <span className="font-bold text-neutral-900">₹{cart.totalPrice.toLocaleString('en-IN')}</span>
           </div>
+          {deliveryMode === 'delivery' ? (
+            <div className="mt-1 flex items-center justify-between text-sm text-neutral-500">
+              <span>{t('delivery_fee_label')}</span>
+              <span>₹{HOME_DELIVERY_FEE}</span>
+            </div>
+          ) : null}
+          <div className="mt-1 flex items-center justify-between border-t border-neutral-100 pt-2 text-sm font-bold text-neutral-900">
+            <span>{t('order_total_label')}</span>
+            <span>₹{grandTotal.toLocaleString('en-IN')}</span>
+          </div>
+
+          <div className="mt-5">
+            <span className="mb-2 block text-sm font-medium text-neutral-700">{t('field_delivery_choice')}</span>
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+              <button
+                type="button"
+                onClick={() => setDeliveryMode('pickup')}
+                className={cn(
+                  'rounded-xl border-2 px-3 py-2.5 text-left text-sm font-semibold',
+                  deliveryMode === 'pickup' ? 'border-brand-600 bg-brand-50 text-brand-700' : 'border-neutral-200 text-neutral-600 hover:border-brand-300',
+                )}
+              >
+                {t('delivery_pickup')}
+              </button>
+              <button
+                type="button"
+                onClick={() => setDeliveryMode('delivery')}
+                className={cn(
+                  'rounded-xl border-2 px-3 py-2.5 text-left text-sm font-semibold',
+                  deliveryMode === 'delivery' ? 'border-brand-600 bg-brand-50 text-brand-700' : 'border-neutral-200 text-neutral-600 hover:border-brand-300',
+                )}
+              >
+                {t('delivery_home')} (₹{HOME_DELIVERY_FEE})
+              </button>
+            </div>
+            <p className="mt-1.5 text-xs text-neutral-400">{deliveryMode === 'pickup' ? t('delivery_free_note') : t('order_delivery_note')}</p>
+          </div>
 
           <form
-            className="mt-5 space-y-3"
+            className="mt-4 space-y-3"
             onSubmit={(e) => {
               e.preventDefault()
               place.run({
@@ -133,6 +178,8 @@ function CartPage() {
                   customerName: form.customerName,
                   phone: form.phone,
                   items: cart.items.map((i) => ({ productId: i.productId, name: i.name, price: i.price, quantity: i.quantity })),
+                  deliveryMode,
+                  deliveryAddress: deliveryMode === 'delivery' ? deliveryAddress : undefined,
                 },
               })
             }}
@@ -145,6 +192,18 @@ function CartPage() {
               <span className="mb-1 block font-medium text-neutral-700">{t('field_phone')}</span>
               <input required value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} className="input" placeholder="10-digit mobile" />
             </label>
+            {deliveryMode === 'delivery' ? (
+              <label className="block text-sm">
+                <span className="mb-1 block font-medium text-neutral-700">{t('field_delivery_address')}</span>
+                <input
+                  required
+                  value={deliveryAddress}
+                  onChange={(e) => setDeliveryAddress(e.target.value)}
+                  className="input"
+                  placeholder={t('delivery_address_placeholder')}
+                />
+              </label>
+            ) : null}
             {place.error ? <p className="text-sm font-medium text-red-600">{place.error}</p> : null}
             <button type="submit" className="w-full rounded-full bg-brand-600 py-3 text-sm font-bold text-white hover:bg-brand-700">
               {place.pending ? t('placing_order') : t('place_pickup_order')}

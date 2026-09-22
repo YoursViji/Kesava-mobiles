@@ -13,6 +13,7 @@ import { getSpecFields } from '@/lib/productSpecs'
 import { useLang } from '@/lib/i18n'
 import { cn } from '@/lib/utils'
 import { DemoBookingForm } from '@/components/DemoBookingForm'
+import { WhatsAppButton } from '@/components/WhatsAppButton'
 
 export const Route = createFileRoute('/mobiles/$id')({
   component: ProductDetail,
@@ -118,6 +119,7 @@ function ProductDetail() {
             >
               <Scale size={16} /> {inCompare ? t('added_to_compare') : t('add_to_compare')}
             </button>
+            <WhatsAppButton message={`Hi, I'd like to know more about the ${product.brand} ${product.name} (\u20b9${product.price.toLocaleString('en-IN')}).`} />
           </div>
 
           <DemoBookingForm productId={product.id} productName={`${product.brand} ${product.name}`} />

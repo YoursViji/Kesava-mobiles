@@ -6,6 +6,7 @@ import { serviceBookings, serviceUpdates } from '@/db/schema'
 import { sendEmail } from '@/lib/email'
 import { currentUser } from '@/lib/session.server'
 import { requireAdmin } from '@/server/admin'
+import { awardLoyaltyPoints } from '@/server/loyalty'
 
 export const SERVICE_STATUSES = ['received', 'diagnosed', 'quoted', 'repairing', 'ready', 'completed'] as const
 
@@ -147,6 +148,11 @@ export const payServiceBooking = createServerFn({ method: 'POST' })
       note: `Payment of ₹${booking.quoteAmount} received. Repair started.`,
       createdAt: now,
     })
+    try {
+      await awardLoyaltyPoints(booking.phone, booking.quoteAmount)
+    } catch {
+      // Loyalty points are a bonus; never let this fail a successful payment.
+    }
     return { ok: true }
   })
 

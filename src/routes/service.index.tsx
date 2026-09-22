@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Wrench, ShieldCheck, Clock, CheckCircle2 } from 'lucide-react'
 import { useAction } from '@/lib/actions'
 import { createServiceBooking, serviceTypes, deliveryModes } from '@/server/service'
+import { estimateRepairRange } from '@/lib/repairEstimate'
 import { useLang } from '@/lib/i18n'
 
 export const Route = createFileRoute('/service/')({ component: ServicePage })
@@ -65,6 +66,12 @@ function ServicePage() {
             <li className="flex gap-2"><ShieldCheck size={16} className="mt-0.5 text-brand-600" /> {t('service_li_warranty')}</li>
             <li className="flex gap-2"><Clock size={16} className="mt-0.5 text-brand-600" /> {t('service_li_time')}</li>
           </ul>
+
+          <div className="mt-6 rounded-2xl border border-neutral-200 bg-neutral-50 p-5">
+            <p className="font-semibold text-neutral-900">{t('repair_estimator_title')}</p>
+            <p className="mt-1 text-sm text-neutral-500">{t('repair_estimator_text')}</p>
+            <RepairEstimateCard brand={form.deviceBrand} serviceType={form.serviceType} />
+          </div>
         </div>
 
         <form
@@ -176,5 +183,19 @@ function Field({ label, children, className }: { label: string; children: ReactN
       <span className="mb-1 block font-medium text-neutral-700">{label}</span>
       {children}
     </label>
+  )
+}
+
+function RepairEstimateCard({ brand, serviceType }: { brand: string; serviceType: string }) {
+  const { t } = useLang()
+  const { min, max } = estimateRepairRange(brand || 'Other', serviceType)
+  return (
+    <div className="mt-4 rounded-xl bg-white p-4 text-center shadow-sm">
+      <p className="text-xs font-medium text-neutral-500">{t('repair_estimate_label')}</p>
+      <p className="mt-1 text-2xl font-extrabold text-brand-700">
+        ₹{min.toLocaleString('en-IN')} – ₹{max.toLocaleString('en-IN')}
+      </p>
+      <p className="mt-1 text-xs text-neutral-400">{t('repair_estimate_note')}</p>
+    </div>
   )
 }

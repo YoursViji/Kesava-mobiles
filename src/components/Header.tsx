@@ -19,6 +19,7 @@ export function Header() {
     { to: '/compare', label: t('nav_compare') },
     { to: '/service', label: t('nav_service') },
     { to: '/service/track', label: t('nav_track') },
+    { to: '/loyalty', label: t('nav_loyalty') },
     { to: '/contact', label: t('nav_contact') },
   ] as const
 
@@ -128,8 +129,8 @@ function LangSwitch({
   setLang,
   compact,
 }: {
-  lang: 'en' | 'te'
-  setLang: (l: 'en' | 'te') => void
+  lang: 'en' | 'te' | 'ta'
+  setLang: (l: 'en' | 'te' | 'ta') => void
   compact?: boolean
 }) {
   return (
@@ -137,16 +138,23 @@ function LangSwitch({
       <button
         onClick={() => setLang('en')}
         aria-label="Switch to English"
-        className={`rounded-full px-2.5 py-1 ${lang === 'en' ? 'bg-brand-600 text-white' : 'text-neutral-500'}`}
+        className={`rounded-full px-2 py-1 ${lang === 'en' ? 'bg-brand-600 text-white' : 'text-neutral-500'}`}
       >
         EN
       </button>
       <button
         onClick={() => setLang('te')}
         aria-label="తెలుగుకు మారండి"
-        className={`rounded-full px-2.5 py-1 ${lang === 'te' ? 'bg-brand-600 text-white' : 'text-neutral-500'}`}
+        className={`rounded-full px-2 py-1 ${lang === 'te' ? 'bg-brand-600 text-white' : 'text-neutral-500'}`}
       >
         {compact ? 'తె' : 'తెలుగు'}
+      </button>
+      <button
+        onClick={() => setLang('ta')}
+        aria-label="தமிழுக்கு மாறவும்"
+        className={`rounded-full px-2 py-1 ${lang === 'ta' ? 'bg-brand-600 text-white' : 'text-neutral-500'}`}
+      >
+        {compact ? 'த' : 'தமிழ்'}
       </button>
     </div>
   )
