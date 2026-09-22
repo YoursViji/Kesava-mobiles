@@ -22,6 +22,16 @@ import { Route as ServiceRouteImport } from './routes/service'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as AccessoriesIndexRouteImport } from './routes/accessories.index'
 import { Route as AccessoriesIdRouteImport } from './routes/accessories.$id'
+import { Route as AdminIndexRouteImport } from './routes/admin.index'
+import { Route as AdminDemosRouteImport } from './routes/admin.demos'
+import { Route as AdminExchangesRouteImport } from './routes/admin.exchanges'
+import { Route as AdminLoginRouteImport } from './routes/admin.login'
+import { Route as AdminPrebookingsRouteImport } from './routes/admin.prebookings'
+import { Route as AdminProductsRouteImport } from './routes/admin.products'
+import { Route as AdminPromotionsRouteImport } from './routes/admin.promotions'
+import { Route as AdminReviewsRouteImport } from './routes/admin.reviews'
+import { Route as AdminSalesRouteImport } from './routes/admin.sales'
+import { Route as AdminServicesRouteImport } from './routes/admin.services'
 import { Route as ApiSeedImagesRouteImport } from './routes/api/seed-images'
 import { Route as MobilesIndexRouteImport } from './routes/mobiles.index'
 import { Route as MobilesIdRouteImport } from './routes/mobiles.$id'
@@ -95,6 +105,56 @@ const AccessoriesIdRoute = AccessoriesIdRouteImport.update({
   path: '/accessories/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminIndexRoute = AdminIndexRouteImport.update({
+  id: '/admin/',
+  path: '/admin/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminDemosRoute = AdminDemosRouteImport.update({
+  id: '/admin/demos',
+  path: '/admin/demos',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminExchangesRoute = AdminExchangesRouteImport.update({
+  id: '/admin/exchanges',
+  path: '/admin/exchanges',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminLoginRoute = AdminLoginRouteImport.update({
+  id: '/admin/login',
+  path: '/admin/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminPrebookingsRoute = AdminPrebookingsRouteImport.update({
+  id: '/admin/prebookings',
+  path: '/admin/prebookings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminProductsRoute = AdminProductsRouteImport.update({
+  id: '/admin/products',
+  path: '/admin/products',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminPromotionsRoute = AdminPromotionsRouteImport.update({
+  id: '/admin/promotions',
+  path: '/admin/promotions',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminReviewsRoute = AdminReviewsRouteImport.update({
+  id: '/admin/reviews',
+  path: '/admin/reviews',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminSalesRoute = AdminSalesRouteImport.update({
+  id: '/admin/sales',
+  path: '/admin/sales',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminServicesRoute = AdminServicesRouteImport.update({
+  id: '/admin/services',
+  path: '/admin/services',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiSeedImagesRoute = ApiSeedImagesRouteImport.update({
   id: '/api/seed-images',
   path: '/api/seed-images',
@@ -144,10 +204,20 @@ export interface FileRoutesByFullPath {
   '/service': typeof ServiceRouteWithChildren
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/accessories/$id': typeof AccessoriesIdRoute
+  '/admin/demos': typeof AdminDemosRoute
+  '/admin/exchanges': typeof AdminExchangesRoute
+  '/admin/login': typeof AdminLoginRoute
+  '/admin/prebookings': typeof AdminPrebookingsRoute
+  '/admin/products': typeof AdminProductsRoute
+  '/admin/promotions': typeof AdminPromotionsRoute
+  '/admin/reviews': typeof AdminReviewsRoute
+  '/admin/sales': typeof AdminSalesRoute
+  '/admin/services': typeof AdminServicesRoute
   '/api/seed-images': typeof ApiSeedImagesRoute
   '/mobiles/$id': typeof MobilesIdRoute
   '/service/track': typeof ServiceTrackRoute
   '/accessories/': typeof AccessoriesIndexRoute
+  '/admin/': typeof AdminIndexRoute
   '/mobiles/': typeof MobilesIndexRoute
   '/service/': typeof ServiceIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
@@ -165,10 +235,20 @@ export interface FileRoutesByTo {
   '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/accessories/$id': typeof AccessoriesIdRoute
+  '/admin/demos': typeof AdminDemosRoute
+  '/admin/exchanges': typeof AdminExchangesRoute
+  '/admin/login': typeof AdminLoginRoute
+  '/admin/prebookings': typeof AdminPrebookingsRoute
+  '/admin/products': typeof AdminProductsRoute
+  '/admin/promotions': typeof AdminPromotionsRoute
+  '/admin/reviews': typeof AdminReviewsRoute
+  '/admin/sales': typeof AdminSalesRoute
+  '/admin/services': typeof AdminServicesRoute
   '/api/seed-images': typeof ApiSeedImagesRoute
   '/mobiles/$id': typeof MobilesIdRoute
   '/service/track': typeof ServiceTrackRoute
   '/accessories': typeof AccessoriesIndexRoute
+  '/admin': typeof AdminIndexRoute
   '/mobiles': typeof MobilesIndexRoute
   '/service': typeof ServiceIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
@@ -188,10 +268,20 @@ export interface FileRoutesById {
   '/service': typeof ServiceRouteWithChildren
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/accessories/$id': typeof AccessoriesIdRoute
+  '/admin/demos': typeof AdminDemosRoute
+  '/admin/exchanges': typeof AdminExchangesRoute
+  '/admin/login': typeof AdminLoginRoute
+  '/admin/prebookings': typeof AdminPrebookingsRoute
+  '/admin/products': typeof AdminProductsRoute
+  '/admin/promotions': typeof AdminPromotionsRoute
+  '/admin/reviews': typeof AdminReviewsRoute
+  '/admin/sales': typeof AdminSalesRoute
+  '/admin/services': typeof AdminServicesRoute
   '/api/seed-images': typeof ApiSeedImagesRoute
   '/mobiles/$id': typeof MobilesIdRoute
   '/service/track': typeof ServiceTrackRoute
   '/accessories/': typeof AccessoriesIndexRoute
+  '/admin/': typeof AdminIndexRoute
   '/mobiles/': typeof MobilesIndexRoute
   '/service/': typeof ServiceIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
@@ -212,10 +302,20 @@ export interface FileRouteTypes {
     | '/service'
     | '/sitemap.xml'
     | '/accessories/$id'
+    | '/admin/demos'
+    | '/admin/exchanges'
+    | '/admin/login'
+    | '/admin/prebookings'
+    | '/admin/products'
+    | '/admin/promotions'
+    | '/admin/reviews'
+    | '/admin/sales'
+    | '/admin/services'
     | '/api/seed-images'
     | '/mobiles/$id'
     | '/service/track'
     | '/accessories/'
+    | '/admin/'
     | '/mobiles/'
     | '/service/'
     | '/api/auth/$'
@@ -233,10 +333,20 @@ export interface FileRouteTypes {
     | '/robots.txt'
     | '/sitemap.xml'
     | '/accessories/$id'
+    | '/admin/demos'
+    | '/admin/exchanges'
+    | '/admin/login'
+    | '/admin/prebookings'
+    | '/admin/products'
+    | '/admin/promotions'
+    | '/admin/reviews'
+    | '/admin/sales'
+    | '/admin/services'
     | '/api/seed-images'
     | '/mobiles/$id'
     | '/service/track'
     | '/accessories'
+    | '/admin'
     | '/mobiles'
     | '/service'
     | '/api/auth/$'
@@ -255,10 +365,20 @@ export interface FileRouteTypes {
     | '/service'
     | '/sitemap.xml'
     | '/accessories/$id'
+    | '/admin/demos'
+    | '/admin/exchanges'
+    | '/admin/login'
+    | '/admin/prebookings'
+    | '/admin/products'
+    | '/admin/promotions'
+    | '/admin/reviews'
+    | '/admin/sales'
+    | '/admin/services'
     | '/api/seed-images'
     | '/mobiles/$id'
     | '/service/track'
     | '/accessories/'
+    | '/admin/'
     | '/mobiles/'
     | '/service/'
     | '/api/auth/$'
@@ -278,9 +398,19 @@ export interface RootRouteChildren {
   ServiceRoute: typeof ServiceRouteWithChildren
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   AccessoriesIdRoute: typeof AccessoriesIdRoute
+  AdminDemosRoute: typeof AdminDemosRoute
+  AdminExchangesRoute: typeof AdminExchangesRoute
+  AdminLoginRoute: typeof AdminLoginRoute
+  AdminPrebookingsRoute: typeof AdminPrebookingsRoute
+  AdminProductsRoute: typeof AdminProductsRoute
+  AdminPromotionsRoute: typeof AdminPromotionsRoute
+  AdminReviewsRoute: typeof AdminReviewsRoute
+  AdminSalesRoute: typeof AdminSalesRoute
+  AdminServicesRoute: typeof AdminServicesRoute
   ApiSeedImagesRoute: typeof ApiSeedImagesRoute
   MobilesIdRoute: typeof MobilesIdRoute
   AccessoriesIndexRoute: typeof AccessoriesIndexRoute
+  AdminIndexRoute: typeof AdminIndexRoute
   MobilesIndexRoute: typeof MobilesIndexRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
   ApiFilesSplatRoute: typeof ApiFilesSplatRoute
@@ -379,6 +509,76 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AccessoriesIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/': {
+      id: '/admin/'
+      path: '/admin'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/demos': {
+      id: '/admin/demos'
+      path: '/admin/demos'
+      fullPath: '/admin/demos'
+      preLoaderRoute: typeof AdminDemosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/exchanges': {
+      id: '/admin/exchanges'
+      path: '/admin/exchanges'
+      fullPath: '/admin/exchanges'
+      preLoaderRoute: typeof AdminExchangesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/login': {
+      id: '/admin/login'
+      path: '/admin/login'
+      fullPath: '/admin/login'
+      preLoaderRoute: typeof AdminLoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/prebookings': {
+      id: '/admin/prebookings'
+      path: '/admin/prebookings'
+      fullPath: '/admin/prebookings'
+      preLoaderRoute: typeof AdminPrebookingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/products': {
+      id: '/admin/products'
+      path: '/admin/products'
+      fullPath: '/admin/products'
+      preLoaderRoute: typeof AdminProductsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/promotions': {
+      id: '/admin/promotions'
+      path: '/admin/promotions'
+      fullPath: '/admin/promotions'
+      preLoaderRoute: typeof AdminPromotionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/reviews': {
+      id: '/admin/reviews'
+      path: '/admin/reviews'
+      fullPath: '/admin/reviews'
+      preLoaderRoute: typeof AdminReviewsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/sales': {
+      id: '/admin/sales'
+      path: '/admin/sales'
+      fullPath: '/admin/sales'
+      preLoaderRoute: typeof AdminSalesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/services': {
+      id: '/admin/services'
+      path: '/admin/services'
+      fullPath: '/admin/services'
+      preLoaderRoute: typeof AdminServicesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/seed-images': {
       id: '/api/seed-images'
       path: '/api/seed-images'
@@ -457,9 +657,19 @@ const rootRouteChildren: RootRouteChildren = {
   ServiceRoute: ServiceRouteWithChildren,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   AccessoriesIdRoute: AccessoriesIdRoute,
+  AdminDemosRoute: AdminDemosRoute,
+  AdminExchangesRoute: AdminExchangesRoute,
+  AdminLoginRoute: AdminLoginRoute,
+  AdminPrebookingsRoute: AdminPrebookingsRoute,
+  AdminProductsRoute: AdminProductsRoute,
+  AdminPromotionsRoute: AdminPromotionsRoute,
+  AdminReviewsRoute: AdminReviewsRoute,
+  AdminSalesRoute: AdminSalesRoute,
+  AdminServicesRoute: AdminServicesRoute,
   ApiSeedImagesRoute: ApiSeedImagesRoute,
   MobilesIdRoute: MobilesIdRoute,
   AccessoriesIndexRoute: AccessoriesIndexRoute,
+  AdminIndexRoute: AdminIndexRoute,
   MobilesIndexRoute: MobilesIndexRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
   ApiFilesSplatRoute: ApiFilesSplatRoute,

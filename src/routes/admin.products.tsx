@@ -298,8 +298,8 @@ function Field({ label, children, span2 }: { label: string; children: ReactNode;
 function ProductRow({ product, onEdit }: { product: Product; onEdit: () => void }) {
   const stock = useOptimisticAction({
     value: { inStock: product.inStock },
-    update: (current) => ({ inStock: !current.inStock }),
-    action: () => adminSetProductStock({ data: { id: product.id, inStock: !stock.value.inStock } }),
+    update: (_current, next: boolean) => ({ inStock: next }),
+    action: (next: boolean) => adminSetProductStock({ data: { id: product.id, inStock: next } }),
   })
 
   return (
@@ -327,7 +327,7 @@ function ProductRow({ product, onEdit }: { product: Product; onEdit: () => void 
             <Pencil size={14} />
           </button>
           <button
-            onClick={() => stock.run()}
+            onClick={() => stock.run(!stock.value.inStock)}
             className="flex items-center gap-1 rounded-lg border border-neutral-200 px-2.5 py-2 text-xs font-semibold text-neutral-600 hover:border-brand-400"
           >
             {stock.value.inStock ? <PackageX size={14} /> : <PackageCheck size={14} />}
