@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 360" width="280" height="360">
+  <rect width="280" height="360" fill="#ffffff"/>
+  <rect x="78" y="28" width="124" height="304" rx="22" fill="#1a1a1a"/>
+  <rect x="84" y="48" width="112" height="260" rx="6" fill="#111827"/>
+  <circle cx="140" cy="38" r="4" fill="#374151"/>
+  <rect x="118" y="308" width="44" height="4" rx="2" fill="#4b5563"/>
+  <rect x="96" y="72" width="88" height="12" rx="3" fill="#facc15"/>
+  <text x="140" y="160" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="#fde68a">realme</text>
+  <text x="140" y="178" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" fill="#ffffff">Narzo N65</text>
+</svg>

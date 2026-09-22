@@ -1,0 +1,20 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "kesava-mobiles",
+  "compatibility_date": "2025-09-02",
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
+  "main": "@tanstack/react-start/server-entry",
+  "observability": {
+    "enabled": true
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "kesava-mobiles-db",
+      "database_id": "5310d22c-7410-471d-9aa5-783ead47aac4",
+      "migrations_dir": "migrations"
+    }
+  ]
+}

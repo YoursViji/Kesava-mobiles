@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 360" width="280" height="360">
+  <rect width="280" height="360" fill="#ffffff"/>
+  <rect x="76" y="24" width="128" height="312" rx="24" fill="#0f172a"/>
+  <rect x="82" y="46" width="116" height="268" rx="8" fill="#082f49"/>
+  <circle cx="140" cy="36" r="4.5" fill="#38bdf8"/>
+  <rect x="116" y="314" width="48" height="4" rx="2" fill="#64748b"/>
+  <text x="140" y="158" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#7dd3fc">vivo</text>
+  <text x="140" y="178" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" fill="#ffffff">V30</text>
+</svg>

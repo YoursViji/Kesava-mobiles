@@ -1,0 +1,42 @@
+{
+  "name": "kesava-mobiles",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Online store for Kesava Mobiles where customers browse and compare phones, view offers, and book and track repair services.",
+  "scripts": {
+    "dev": "vite dev --config vite.config.cloudflare.ts --port 3000",
+    "build": "vite build --config vite.config.cloudflare.ts",
+    "typecheck": "tsc --noEmit",
+    "deploy": "npm run build && wrangler deploy",
+    "db:migrate:local": "wrangler d1 migrations apply kesava-mobiles-db --local",
+    "db:migrate": "wrangler d1 migrations apply kesava-mobiles-db --remote",
+    "cf-typegen": "wrangler types"
+  },
+  "dependencies": {
+    "@tailwindcss/vite": "^4.3.3",
+    "@tanstack/react-router": "^1.170.36",
+    "@tanstack/react-start": "^1.168.54",
+    "better-auth": "^1.7.4",
+    "clsx": "^2.1.1",
+    "drizzle-orm": "^0.45.2",
+    "maplibre-gl": "^6.10.0",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "tailwind-merge": "^3.0.0",
+    "tailwindcss": "^4.3.3"
+  },
+  "devDependencies": {
+    "@cloudflare/vite-plugin": "^1.54.9",
+    "@types/node": "^22.10.2",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.1.1",
+    "typescript": "~6.0.3",
+    "vite": "^8.3.0",
+    "wrangler": "^4.131.2"
+  },
+  "engines": {
+    "node": ">=22.13"
+  }
+}
