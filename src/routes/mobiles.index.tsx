@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { createFileRoute, Link } from '@tanstack/react-router'
+import { useEffect, useRef, useState } from 'react'
 import { Search, SlidersHorizontal } from 'lucide-react'
 import { z } from 'zod'
 import { listMobiles } from '@/server/products'
@@ -17,7 +18,6 @@ const searchSchema = z.object({
 export const Route = createFileRoute('/mobiles')({
   component: MobilesPage,
   validateSearch: searchSchema,
-  loaderDeps: ({ search }) => search,
   loader: async () => {
     const products = await listMobiles()
     return { products }
@@ -38,7 +38,26 @@ function MobilesPage() {
   const search = Route.useSearch()
   const navigate = Route.useNavigate()
   const { t } = useLang()
-  const q = search.q ?? ''
+  const urlQ = search.q ?? ''
+  const [q, setQ] = useState(urlQ)
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const lastWritten = useRef(urlQ)
+
+  useEffect(() => {
+    if (urlQ === lastWritten.current) return
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current)
+      debounceRef.current = null
+    }
+    lastWritten.current = urlQ
+    setQ(urlQ)
+  }, [urlQ])
+
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current)
+    }
+  }, [])
 
   const filtered = products
     .filter((p) => !search.brand || p.brand === search.brand)
@@ -63,7 +82,16 @@ function MobilesPage() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" size={18} />
           <input
             value={q}
-            onChange={(e) => navigate({ search: (prev) => ({ ...prev, q: e.target.value || undefined }), replace: true })}
+            onChange={(e) => {
+              const next = e.target.value
+              setQ(next)
+              if (debounceRef.current) clearTimeout(debounceRef.current)
+              debounceRef.current = setTimeout(() => {
+                lastWritten.current = next
+                debounceRef.current = null
+                navigate({ search: (prev) => ({ ...prev, q: next || undefined }), replace: true })
+              }, 300)
+            }}
             placeholder={t('search_placeholder')}
             className="w-full rounded-full border border-neutral-300 bg-white py-2.5 pl-10 pr-4 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
           />
