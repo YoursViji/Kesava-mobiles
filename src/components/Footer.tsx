@@ -10,7 +10,7 @@ export function Footer() {
       <div className="mx-auto grid max-w-6xl gap-8 px-4 py-12 md:grid-cols-4">
         <div>
           <div className="flex items-center gap-2">
-            <img src="/logo.svg" alt="Kesava Mobiles logo" className="h-9 w-9 rounded-lg object-cover" />
+            <img src="/logo.svg" alt="Balaji Mobiles logo" className="h-9 w-9 rounded-lg object-cover" />
             <h2 className="text-lg font-bold text-white">{STORE.name}</h2>
           </div>
           <p className="mt-2 text-sm text-neutral-400">{STORE.tagline}</p>
@@ -49,6 +49,8 @@ export function Footer() {
       </div>
       <div className="border-t border-neutral-800 py-4 text-center text-xs text-neutral-500">
         © {new Date().getFullYear()} {STORE.name}, Nagari. All rights reserved.
+        {' · '}
+        <Link to="/admin/login" className="font-semibold text-neutral-400 hover:text-white">Admin login</Link>
       </div>
     </footer>
   )

@@ -59,8 +59,8 @@ export const createPreBooking = createServerFn({ method: 'POST' })
       try {
         await sendEmail({
           to: data.email,
-          subject: `Kesava Mobiles — ${launch.name} pre-booking confirmed (${bookingCode})`,
-          text: `Hi ${data.customerName},\n\nYour token of ₹${launch.tokenAmount} for the ${launch.name} is confirmed. We'll notify you the moment it arrives at our Nagari store — your booking code is ${bookingCode}.\n\n— Kesava Mobiles`,
+          subject: `Balaji Mobiles — ${launch.name} pre-booking confirmed (${bookingCode})`,
+          text: `Hi ${data.customerName},\n\nYour token of ₹${launch.tokenAmount} for the ${launch.name} is confirmed. We'll notify you the moment it arrives at our Nagari store — your booking code is ${bookingCode}.\n\n— Balaji Mobiles`,
         })
       } catch {
         // The pre-booking is already saved; a notification failure should not fail it.

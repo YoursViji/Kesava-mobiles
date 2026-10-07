@@ -88,8 +88,8 @@ export const createServiceBooking = createServerFn({ method: 'POST' })
       try {
         await sendEmail({
           to: data.email,
-          subject: `Kesava Mobiles — service booking confirmed (${trackingCode})`,
-          text: `Hi ${data.customerName},\n\nWe've registered your ${data.deviceBrand} ${data.deviceModel} for ${data.serviceType}.\nYour tracking code is ${trackingCode}. Track your service any time at our website under "Track Service".\n\n— Kesava Mobiles`,
+          subject: `Balaji Mobiles — service booking confirmed (${trackingCode})`,
+          text: `Hi ${data.customerName},\n\nWe've registered your ${data.deviceBrand} ${data.deviceModel} for ${data.serviceType}.\nYour tracking code is ${trackingCode}. Track your service any time at our website under "Track Service".\n\n— Balaji Mobiles`,
         })
       } catch {
         // A booking must succeed even if the confirmation mail fails.

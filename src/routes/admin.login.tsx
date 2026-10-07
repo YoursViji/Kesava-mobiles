@@ -3,18 +3,14 @@ import { useState } from 'react'
 import { ShieldCheck } from 'lucide-react'
 import { authClient } from '@/lib/auth-client'
 import { useAction } from '@/lib/actions'
-import { getSessionUser } from '@/lib/session'
 import { ensureAdminAccount, checkIsAdmin } from '@/server/admin'
 import { ADMIN_EMAIL } from '@/data/options'
 
 export const Route = createFileRoute('/admin/login')({
   component: AdminLoginPage,
   beforeLoad: async () => {
-    const user = await getSessionUser()
-    if (user) {
-      const { isAdmin } = await checkIsAdmin()
-      if (isAdmin) throw redirect({ to: '/admin' })
-    }
+    const { isAdmin } = await checkIsAdmin()
+    if (isAdmin) throw redirect({ to: '/admin' })
   },
   loader: async () => {
     await ensureAdminAccount()
@@ -38,7 +34,7 @@ function AdminLoginPage() {
           <span className="grid h-12 w-12 place-items-center rounded-xl bg-brand-50 text-brand-700">
             <ShieldCheck size={22} />
           </span>
-          <h1 className="mt-3 text-xl font-bold text-neutral-900">Kesava Mobiles Admin</h1>
+          <h1 className="mt-3 text-xl font-bold text-neutral-900">Balaji Mobiles Admin</h1>
           <p className="mt-1 text-sm text-neutral-500">Sign in to manage the store's catalogue, orders and bookings.</p>
         </div>
 

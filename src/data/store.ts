@@ -1,7 +1,7 @@
-// Static business details for Kesava Mobiles. Not a database table because it never changes
+// Static business details for Balaji Mobiles. Not a database table because it never changes
 // per-request; edit here if the store's details change.
 export const STORE = {
-  name: 'Kesava Mobiles',
+  name: 'Balaji Mobiles',
   tagline: 'Sales & Service you can trust in Nagari',
   address: 'Prakasam Rd, Nagari, Andhra Pradesh 517590',
   shortMapText: '8HCP+37 Nagari, Andhra Pradesh',

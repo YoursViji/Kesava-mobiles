@@ -74,7 +74,7 @@ function MobilesPage() {
     <main className="mx-auto max-w-6xl px-4 py-8">
       <h1 className="text-2xl font-bold text-neutral-900">{t('mobiles_title')}</h1>
       <p className="mt-1 text-neutral-500">
-        {products.length} phones from every major brand, in stock at {`Kesava Mobiles, Nagari`}.
+        {products.length} phones from every major brand, in stock at {`Balaji Mobiles, Nagari`}.
       </p>
 
       <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center">

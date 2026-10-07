@@ -45,7 +45,7 @@ function RootLayout() {
         </div>
         <CompareBar />
         <Footer />
-        <WhatsAppButton floating message="Hi Kesava Mobiles, I have an enquiry." />
+        <WhatsAppButton floating message="Hi Balaji Mobiles, I have an enquiry." />
       </div>
     </LanguageProvider>
   )

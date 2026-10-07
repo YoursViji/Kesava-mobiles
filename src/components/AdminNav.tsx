@@ -37,8 +37,8 @@ export function AdminNav({ active }: { active: string }) {
     <div className="border-b border-neutral-200 bg-neutral-950 text-white">
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3">
         <Link to="/admin" className="flex items-center gap-2 font-bold">
-          <img src="/logo.svg" alt="Kesava Mobiles logo" className="h-8 w-8 rounded-lg object-cover" />
-          Kesava Mobiles — Admin
+          <img src="/logo.svg" alt="Balaji Mobiles logo" className="h-8 w-8 rounded-lg object-cover" />
+          Balaji Mobiles — Admin
         </Link>
         <div className="flex items-center gap-3">
           <a href="/" target="_blank" rel="noreferrer" className="flex items-center gap-1.5 text-xs font-medium text-neutral-300 hover:text-white">

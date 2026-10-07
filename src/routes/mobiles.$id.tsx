@@ -33,7 +33,7 @@ export const Route = createFileRoute('/mobiles/$id')({
       </Link>
     </main>
   ),
-  head: ({ loaderData }) => ({ meta: loaderData ? [{ title: `${loaderData.product.name} — Kesava Mobiles` }] : [] }),
+  head: ({ loaderData }) => ({ meta: loaderData ? [{ title: `${loaderData.product.name} — Balaji Mobiles` }] : [] }),
 })
 
 function ProductDetail() {

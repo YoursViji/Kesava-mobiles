@@ -203,9 +203,9 @@ const dict = {
 
   offers_title: { en: 'Offers & promotions', te: 'ఆఫర్లు & ప్రమోషన్లు', ta: 'சலுகைகள் & விளம்பரங்கள்' },
   offers_subtitle: {
-    en: 'Live discounts at Kesava Mobiles, Nagari — plus exchange and bank offers you can combine at checkout.',
-    te: 'కేసవ మొబైల్స్, నగరిలో లైవ్ డిస్కౌంట్లు — చెక్అవుట్‌లో కలిపి ఉపయోగించే ఎక్స్‌చేంజ్ & బ్యాంక్ ఆఫర్లు.',
-    ta: 'கேசவ மொபைல்ஸ், நகரியில் நேரடி தள்ளுபடிகள் — செக்அவுட்டில் இணைத்து பயன்படுத்தக்கூடிய எக்ஸ்சேஞ்ச் & வங்கி சலுகைகள்.',
+    en: 'Live discounts at Balaji Mobiles, Nagari — plus exchange and bank offers you can combine at checkout.',
+    te: 'బాలాజీ మొబైల్స్, నగరిలో లైవ్ డిస్కౌంట్లు — చెక్అవుట్‌లో కలిపి ఉపయోగించే ఎక్స్‌చేంజ్ & బ్యాంక్ ఆఫర్లు.',
+    ta: 'பாலாஜி மொபைல்ஸ், நகரியில் நேரடி தள்ளுபடிகள் — செக்அவுட்டில் இணைத்து பயன்படுத்தக்கூடிய எக்ஸ்சேஞ்ச் & வங்கி சலுகைகள்.',
   },
   offer_exchange_title: { en: 'Exchange bonus', te: 'ఎక్స్‌చేంజ్ బోనస్', ta: 'எக்ஸ்சேஞ்ச் போனஸ்' },
   offer_exchange_text: {

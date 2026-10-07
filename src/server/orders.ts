@@ -90,7 +90,7 @@ export const createOrder = createServerFn({ method: 'POST' })
 
     try {
       await sendEmail({
-        to: 'store@kesavamobiles.local',
+        to: 'store@balajimobiles.local',
         subject: `New ${data.deliveryMode === 'delivery' ? 'home delivery' : 'pickup'} order ${orderCode}`,
         text: `${data.customerName} (${data.phone}) placed an order for ₹${totalAmount.toLocaleString('en-IN')}.\n${
           data.deliveryMode === 'delivery' ? `Deliver to: ${data.deliveryAddress}\n` : ''

@@ -27,7 +27,7 @@ export function Header() {
     <header className="sticky top-0 z-40 border-b border-neutral-200 bg-white/95 backdrop-blur">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3">
         <Link to="/" className="flex items-center gap-2 shrink-0">
-          <img src="/logo.svg" alt="Kesava Mobiles logo" className="h-10 w-10 rounded-xl object-cover ring-1 ring-brand-200" />
+          <img src="/logo.svg" alt="Balaji Mobiles logo" className="h-10 w-10 rounded-xl object-cover ring-1 ring-brand-200" />
           <span className="text-lg font-bold text-neutral-900 leading-tight">
             {STORE.name}
             <span className="block text-[11px] font-medium text-brand-600">Sales & Service</span>
@@ -73,13 +73,21 @@ export function Header() {
 
         <div className="flex items-center gap-2 lg:hidden">
           <LangSwitch lang={lang} setLang={setLang} compact />
-          <Link to="/cart" className="relative rounded-lg border border-neutral-200 p-2 text-neutral-700">
+          <Link to="/cart" aria-label="Cart" className="relative rounded-lg border border-neutral-200 p-2 text-neutral-700">
             <ShoppingBag size={18} />
             {cart.totalItems > 0 ? (
               <span className="absolute -right-1 -top-1 grid h-4 w-4 place-items-center rounded-full bg-brand-600 text-[9px] font-bold text-white">
                 {cart.totalItems}
               </span>
             ) : null}
+          </Link>
+          <Link
+            to="/admin/login"
+            aria-label="Admin login"
+            title="Admin login"
+            className="rounded-lg border border-neutral-200 p-2 text-neutral-700 hover:border-brand-400 hover:text-brand-600"
+          >
+            <ShieldCheck size={18} />
           </Link>
           <button
             aria-label="Toggle menu"
@@ -116,6 +124,13 @@ export function Header() {
               className="mt-1 flex items-center justify-center gap-2 rounded-full border border-brand-600 px-4 py-2 text-sm font-semibold text-brand-600"
             >
               <Wrench size={15} /> {t('nav_book_service_short')}
+            </Link>
+            <Link
+              to="/admin/login"
+              onClick={() => setOpen(false)}
+              className="mt-2 flex items-center justify-center gap-2 rounded-full bg-neutral-900 px-4 py-2.5 text-sm font-bold text-white"
+            >
+              <ShieldCheck size={15} /> Admin login
             </Link>
           </nav>
         </div>

@@ -8,7 +8,7 @@ import { ADMIN_EMAIL } from '@/data/options'
 import { requireAdmin } from '@/server/admin-guard.server'
 
 const ADMIN_PASSWORD = 'Admin@kesava-mobiles'
-const ADMIN_NAME = 'Kesava Mobiles Admin'
+const ADMIN_NAME = 'Balaji Mobiles Admin'
 
 /** Makes sure the one static admin account exists and carries the 'admin' role. Safe to call every time the
  * admin login page loads: it is a no-op once the account is there. */
