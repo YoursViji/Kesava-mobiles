@@ -1,8 +1,9 @@
 import { createServerFn } from '@tanstack/react-start'
-import { desc, eq } from 'drizzle-orm'
+import { desc, eq, inArray } from 'drizzle-orm'
 import { z } from 'zod'
 import { getDb } from '@/lib/db'
-import { orderItems, orders } from '@/db/schema'
+import { orderItems, orders, products } from '@/db/schema'
+import { SIM_CARRIERS, SIM_PLANS, SIM_STATUSES } from '@/data/sim'
 import { sendEmail } from '@/lib/email'
 import { requireAdmin } from '@/server/admin-guard.server'
 import { awardLoyaltyPoints } from '@/server/loyalty-award.server'
@@ -29,6 +30,8 @@ const orderSchema = z
     items: z.array(itemSchema).min(1, 'Your cart is empty'),
     deliveryMode: z.enum(['pickup', 'delivery']).default('pickup'),
     deliveryAddress: z.string().optional().or(z.literal('')),
+    simCarrier: z.enum(SIM_CARRIERS).optional(),
+    simPlan: z.enum(SIM_PLANS).optional(),
   })
   .refine((data) => data.deliveryMode !== 'delivery' || (data.deliveryAddress && data.deliveryAddress.trim().length > 4), {
     message: 'Please enter your delivery address',
@@ -39,6 +42,12 @@ export const createOrder = createServerFn({ method: 'POST' })
   .validator(orderSchema)
   .handler(async ({ data }) => {
     const db = await getDb()
+    if (data.simCarrier) {
+      if (!data.simPlan) throw new Error('Please choose a prepaid plan preference')
+      if (data.deliveryMode !== 'pickup') throw new Error('SIM requests require store pickup for identity verification')
+      const phones = await db.select().from(products).where(inArray(products.id, data.items.map((item) => item.productId)))
+      if (!phones.some((product) => product.category === 'Smartphone')) throw new Error('Add a phone to request a new SIM')
+    } else if (data.simPlan) throw new Error('Please select a SIM carrier')
     const itemsTotal = data.items.reduce((sum, i) => sum + i.price * i.quantity, 0)
     const deliveryFee = data.deliveryMode === 'delivery' ? HOME_DELIVERY_FEE : 0
     const totalAmount = itemsTotal + deliveryFee
@@ -64,6 +73,9 @@ export const createOrder = createServerFn({ method: 'POST' })
       deliveryAddress: data.deliveryMode === 'delivery' ? data.deliveryAddress || null : null,
       deliveryFee,
       deliveryStatus: data.deliveryMode === 'delivery' ? 'processing' : null,
+      simCarrier: data.simCarrier ?? null,
+      simPlan: data.simPlan ?? null,
+      simStatus: data.simCarrier ? 'requested' : null,
     })
     await db.insert(orderItems).values(
       data.items.map((item) => ({
@@ -94,7 +106,7 @@ export const createOrder = createServerFn({ method: 'POST' })
       // Loyalty points are a bonus; never let this fail a successful order.
     }
 
-    return { id, orderCode, totalAmount, deliveryMode: data.deliveryMode, deliveryFee }
+    return { id, orderCode, totalAmount, deliveryMode: data.deliveryMode, deliveryFee, simCarrier: data.simCarrier ?? null, simPlan: data.simPlan ?? null }
   })
 
 // --- Admin: sales ----------------------------------------------------------------------------
@@ -112,6 +124,18 @@ export const adminListOrders = createServerFn({ method: 'GET' }).handler(async (
   }
   return allOrders.map((order) => ({ ...order, items: itemsByOrder.get(order.id) ?? [] }))
 })
+
+export const adminUpdateSimRequest = createServerFn({ method: 'POST' })
+  .validator(z.object({ id: z.string(), status: z.enum(SIM_STATUSES), number: z.string().trim().regex(/^$|^[6-9]\d{9}$/, 'Enter a valid 10-digit mobile number') }))
+  .handler(async ({ data }) => {
+    await requireAdmin()
+    const db = await getDb()
+    const order = await db.select().from(orders).where(eq(orders.id, data.id)).get()
+    if (!order?.simCarrier) throw new Error('SIM request not found')
+    if (data.status === 'activated' && !data.number) throw new Error('Enter the activated SIM number')
+    await db.update(orders).set({ simStatus: data.status, simNumber: data.number || null }).where(eq(orders.id, data.id))
+    return { ok: true }
+  })
 
 export const adminUpdateDeliveryStatus = createServerFn({ method: 'POST' })
   .validator(z.object({ id: z.string(), deliveryStatus: z.enum(DELIVERY_STATUSES) }))

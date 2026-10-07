@@ -8,7 +8,7 @@
 // ./map instead. The two work together: <WorldMap> to choose a country, <Map> to look inside it.
 
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react'
-import { COUNTRIES, countryByCode, type Country } from './countries'
+import { COUNTRIES, countryByCode, countryName, type Country } from './countries'
 
 /** A ring of [longitude, latitude] pairs. */
 type Ring = [number, number][]
@@ -321,8 +321,8 @@ export function WorldMap({
     tooltip && hoveredCountry
       ? (formatTooltip?.(hoveredCountry, values?.[hoveredCountry.code]) ??
         (typeof values?.[hoveredCountry.code] === 'number'
-          ? `${hoveredCountry.name}: ${values[hoveredCountry.code]}`
-          : hoveredCountry.name))
+          ? `${countryName(hoveredCountry)}: ${values[hoveredCountry.code]}`
+          : countryName(hoveredCountry)))
       : null
 
   return (
@@ -357,7 +357,7 @@ export function WorldMap({
               vectorEffect="non-scaling-stroke"
               tabIndex={selectable ? 0 : undefined}
               role={selectable ? 'button' : undefined}
-              aria-label={selectable ? country.name : undefined}
+              aria-label={selectable ? countryName(country) : undefined}
               aria-pressed={selectable ? selected?.toUpperCase() === country.code : undefined}
               style={{ cursor: selectable ? 'pointer' : undefined, outline: 'none', transition: 'fill 120ms ease' }}
               onMouseEnter={() => setHovered(country.code)}
@@ -413,5 +413,5 @@ export function WorldMap({
   )
 }
 
-export { COUNTRIES, countryByCode, findCountry, searchCountries, countriesIn, distanceKm } from './countries'
+export { COUNTRIES, countryByCode, countryName, findCountry, searchCountries, countriesIn, distanceKm } from './countries'
 export type { Country } from './countries'

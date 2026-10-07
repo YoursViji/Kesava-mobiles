@@ -1,6 +1,5 @@
 import { createFileRoute, redirect } from '@tanstack/react-router'
 import { useState } from 'react'
-import { getSessionUser } from '@/lib/session'
 import { checkIsAdmin } from '@/server/admin'
 import { adminListServiceBookings, adminUpdateServiceStatus } from '@/server/service'
 import { SERVICE_STATUSES } from '@/data/options'
@@ -11,8 +10,6 @@ import type { ServiceBooking } from '@/db/schema'
 export const Route = createFileRoute('/admin/services')({
   component: AdminServicesPage,
   beforeLoad: async () => {
-    const user = await getSessionUser()
-    if (!user) throw redirect({ to: '/admin/login' })
     const { isAdmin } = await checkIsAdmin()
     if (!isAdmin) throw redirect({ to: '/admin/login' })
   },
@@ -49,7 +46,7 @@ function AdminServicesPage() {
   )
 }
 
-function ServiceRow({ booking }: { booking: ServiceBooking }) {
+function ServiceRow({ booking }: { booking: ServiceBooking & { photos: { id: string; fileName: string; url: string }[] } }) {
   const [status, setStatus] = useState<(typeof SERVICE_STATUSES)[number]>(
     SERVICE_STATUSES.includes(booking.status as (typeof SERVICE_STATUSES)[number])
       ? (booking.status as (typeof SERVICE_STATUSES)[number])
@@ -77,6 +74,10 @@ function ServiceRow({ booking }: { booking: ServiceBooking }) {
         </span>
       </div>
 
+      {booking.photos.length ? <section className="mt-4">
+        <h2 className="text-sm font-semibold text-neutral-900">Damage photos ({booking.photos.length})</h2>
+        <div className="mt-2 flex flex-wrap gap-3">{booking.photos.map((photo, index) => <a key={photo.id} href={photo.url} target="_blank" rel="noreferrer" className="w-28 rounded-xl border border-neutral-200 bg-neutral-50 p-2 text-neutral-900 hover:border-brand-400"><img src={photo.url} alt={`Damage photo ${index + 1} for ${booking.deviceBrand} ${booking.deviceModel}`} className="aspect-square w-full rounded-lg object-cover" /><p className="mt-1 truncate text-xs text-neutral-600">{photo.fileName}</p></a>)}</div>
+      </section> : null}
       <div className="mt-4 flex flex-wrap items-end gap-3 border-t border-neutral-100 pt-4">
         <label className="text-sm">
           <span className="mb-1 block font-medium text-neutral-700">Move to status</span>

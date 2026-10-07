@@ -5,6 +5,7 @@ import { useCart } from '@/lib/cart'
 import { useAction } from '@/lib/actions'
 import { createOrder } from '@/server/orders'
 import { HOME_DELIVERY_FEE } from '@/data/options'
+import { SIM_CARRIERS, SIM_PLANS } from '@/data/sim'
 import { STORE } from '@/data/store'
 import { useLang } from '@/lib/i18n'
 import { cn } from '@/lib/utils'
@@ -17,7 +18,10 @@ function CartPage() {
   const [form, setForm] = useState({ customerName: '', phone: '' })
   const [deliveryMode, setDeliveryMode] = useState<'pickup' | 'delivery'>('pickup')
   const [deliveryAddress, setDeliveryAddress] = useState('')
-  const [confirmed, setConfirmed] = useState<{ orderCode: string; totalAmount: number; deliveryMode: 'pickup' | 'delivery'; deliveryFee: number } | null>(null)
+  const [simCarrier, setSimCarrier] = useState<'' | (typeof SIM_CARRIERS)[number]>('')
+  const [simPlan, setSimPlan] = useState<(typeof SIM_PLANS)[number]>(SIM_PLANS[0])
+  const simEligible = deliveryMode === 'pickup' && cart.items.some((item) => item.category === 'Smartphone')
+  const [confirmed, setConfirmed] = useState<{ orderCode: string; totalAmount: number; deliveryMode: 'pickup' | 'delivery'; deliveryFee: number; simCarrier: string | null; simPlan: string | null } | null>(null)
 
   const place = useAction(createOrder, {
     onSuccess: (data) => {
@@ -53,6 +57,7 @@ function CartPage() {
         {confirmed.deliveryMode === 'delivery' ? (
           <p className="mt-2 text-sm text-neutral-500">{t('order_delivery_note')}</p>
         ) : null}
+        {confirmed.simCarrier ? <p className="mt-3 rounded-xl bg-brand-50 p-3 text-sm text-brand-800">{confirmed.simCarrier} SIM requested · {confirmed.simPlan}. Staff will confirm the recharge price and prepare your SIM for activation at pickup after identity verification.</p> : null}
         <p className="mt-3 text-xs text-brand-600">{t('loyalty_points_earned_note')}</p>
         <div className="mt-6 flex flex-wrap justify-center gap-3">
           <Link to="/mobiles" className="rounded-full bg-brand-600 px-5 py-2.5 text-sm font-bold text-white">
@@ -170,6 +175,14 @@ function CartPage() {
             <p className="mt-1.5 text-xs text-neutral-400">{deliveryMode === 'pickup' ? t('delivery_free_note') : t('order_delivery_note')}</p>
           </div>
 
+          <section className="mt-5 rounded-xl border border-neutral-200 p-3">
+            <h3 className="text-sm font-bold text-neutral-900">New SIM with your phone</h3>
+            {simEligible ? <div className="mt-2 space-y-2">
+              <label className="block text-sm">Carrier<select className="input mt-1" value={simCarrier} onChange={(e) => setSimCarrier(e.target.value as typeof simCarrier)}><option value="">No SIM needed</option>{SIM_CARRIERS.map((carrier) => <option key={carrier}>{carrier}</option>)}</select></label>
+              {simCarrier ? <label className="block text-sm">Prepaid plan preference<select className="input mt-1" value={simPlan} onChange={(e) => setSimPlan(e.target.value as typeof simPlan)}>{SIM_PLANS.map((plan) => <option key={plan}>{plan}</option>)}</select></label> : null}
+              <p className="text-xs text-neutral-600">No SIM or recharge charge is collected online. Current tariffs, number availability and activation are confirmed at pickup after mandatory identity verification. Bring valid ID; do not upload identity documents here.</p>
+            </div> : <p className="mt-2 text-xs text-neutral-600">Add a phone and choose store pickup to request a SIM. Activation requires in-store identity verification.</p>}
+          </section>
           <form
             className="mt-4 space-y-3"
             onSubmit={(e) => {
@@ -180,6 +193,8 @@ function CartPage() {
                   phone: form.phone,
                   items: cart.items.map((i) => ({ productId: i.productId, name: i.name, price: i.price, quantity: i.quantity })),
                   deliveryMode,
+                  simCarrier: simEligible && simCarrier ? simCarrier : undefined,
+                  simPlan: simEligible && simCarrier ? simPlan : undefined,
                   deliveryAddress: deliveryMode === 'delivery' ? deliveryAddress : undefined,
                 },
               })

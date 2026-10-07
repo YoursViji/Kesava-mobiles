@@ -112,9 +112,15 @@ type MarkerInstance = import('maplibre-gl').Marker
 let libraryPromise: Promise<MapLibre> | null = null
 function loadLibrary(): Promise<MapLibre> {
   if (import.meta.env.SSR) return Promise.reject(new Error('The map is only drawn in the browser'))
-  libraryPromise ??= Promise.all([import('maplibre-gl'), import('maplibre-gl/dist/maplibre-gl.css')]).then(
-    ([library]) => library,
-  )
+  libraryPromise ??= Promise.all([
+    import('maplibre-gl'),
+    import('maplibre-gl/dist/maplibre-gl.css'),
+    // Vite must bundle the worker and its shared module; MapLibre's default sibling URL is not emitted.
+    import('maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url'),
+  ]).then(([library, , worker]) => {
+    library.setWorkerUrl(worker.default)
+    return library
+  })
   return libraryPromise
 }
 
@@ -206,6 +212,7 @@ export function Map({
         })
         map.on('error', (event) => {
           // A single tile that will not load must not blank the map; a broken style must not be silent.
+          if (event.error?.message?.includes('Worker failed to load')) setState('failed')
           if (import.meta.env?.DEV) console.warn('[map]', event.error?.message ?? event)
         })
         map.once('load', () => !cancelled && setState('ready'))

@@ -14,13 +14,15 @@ These files are always present and cannot be edited. Read them with `read_file`.
 | `src/lib/monstarx/cloudflare.ts` | `cloudflare`: the owner's own Cloudflare account — KV, R2, Queues, Vectorize, Workers AI, Browser Rendering, Images, Analytics Engine | Server code only |
 | `src/lib/monstarx/map.tsx` | `<Map>`: a pannable, zoomable map with no API key | Routes and components |
 | `src/lib/monstarx/world.tsx` | `<WorldMap>`: a clickable map of the world, no key and no network | Routes and components |
-| `src/lib/monstarx/countries.ts` | `COUNTRIES`, `countryByCode()`, `findCountry()`, `searchCountries()`, `countriesIn()`, `distanceKm()` | Anywhere |
+| `src/lib/monstarx/countries.ts` | `COUNTRIES`, `countryByCode()`, `countryName()`, `findCountry()`, `searchCountries()`, `countriesIn()`, `distanceKm()` | Anywhere |
 | `src/lib/monstarx/world-shapes.ts` | The country outlines `<WorldMap>` draws (loaded by it, never imported by the app) | Nothing imports it |
 | `src/lib/monstarx/firebase.ts` | `firestore`, `firebaseAuth`, `firebaseStorage`, `firebaseMessaging`, `firebaseRealtime`: the owner's own Firebase project, when its connector is connected | Server code only |
-| `src/lib/actions.ts` | `useAction()` and `useOptimisticAction()`: buttons that answer at once | Routes and components |
-| `src/lib/auth.ts` | Better Auth on the server: email and password accounts, the admin plugin, password reset emails. `getAuth()` | Server code only (`src/server/*.ts`, server routes) |
+| `src/lib/monstarx/country-data.ts` | `countryData`: live public data of Singapore, Japan, Malaysia, India, Indonesia, the UAE and the Philippines, when the owner switched the country on | Server code only |
+| `src/lib/actions.ts` | `useAction()` and `useOptimisticAction()`: buttons that answer at once; `messageOf()` turns action errors into the app's language | Routes and components |
+| `src/lib/auth.ts` | Better Auth on the server: email and password accounts, Google sign-in when the owner turns it on, the admin plugin, password reset emails. `getAuth()` | Server code only (`src/server/*.ts`, server routes) |
 | `src/lib/auth-client.ts` | `authClient`, Better Auth in the browser | Routes and components |
-| `src/lib/session.ts` | `getSessionUser()`, a server function | Routes and components |
+| `src/lib/auth-popup.ts` | `framedSignIn()`: Google sign-in in a pop-up when the app runs in a frame (the MonstarX preview); used by `auth.ts` | Nothing imports it but `auth.ts` |
+| `src/lib/session.ts` | `getSessionUser()` and `getSignInOptions()`, server functions | Routes and components |
 | `src/lib/session.server.ts` | `currentUser()`, `requireUser()` and the `SessionUser` type | Server code only |
 | `src/routes/api/auth.$.ts` | Better Auth's endpoints at `/api/auth/*` | Nothing imports it |
 | `src/db/auth-schema.ts` | The Drizzle tables `user`, `session`, `account` and `verification` | Through `@/db/schema` |
@@ -82,6 +84,11 @@ back to before its owner has filled anything in, and `GEO_CRAWLERS` is the list 
 `robots.txt` names one by one.
 
 ## Buttons and actions
+
+Give every filled button (and link styled as a button) a foreground colour paired with its background: for example,
+`bg-white text-neutral-900` or `bg-neutral-900 text-white`. Include hover, active and disabled states. Do not let a
+button inherit text colour from a surrounding section: white text on a white button disappears. The starter gives
+unadorned buttons dark text as a fallback, but a styled button needs its own contrasting label and icon colour.
 
 Every button, form and toggle that calls a server function goes through `@/lib/actions`. Writing the call by hand is
 the single most common way a generated app feels broken:
@@ -166,8 +173,13 @@ why. Clicks are never ignored, and the calls reach the server in the order they 
 
 - Better Auth runs inside this app (`src/lib/auth.ts`) and keeps its users in the app's own database (the built-in
   tables below). Its endpoints are at `/api/auth/*`: sign-up, sign-in, sign-out, the session and password reset.
-- Accounts are email and password; a password needs at least 8 characters. Email verification is not required, and
-  there is no social sign-in.
+- Accounts are email and password; a password needs at least 8 characters. Email verification is not required.
+- Google sign-in is on only when the owner turns it on in MonstarX (Backend → Cloud → Auth → Sign-in methods); the
+  app cannot turn it on itself. `await getSignInOptions()` from `@/lib/session` returns `{ google }`: show a
+  "Continue with Google" button only when `google` is true. Someone who signed up with email and then continues with
+  Google under the same address stays the same user. There is no other social sign-in.
+- Inside the MonstarX preview the app runs in a frame, where Google refuses to open: there `signIn.social` opens
+  Google in a pop-up and the frame continues to `callbackURL` once it is done. The app's code is the same either way.
 - A successful sign-up or sign-in adds a row to `session` and sets the session cookie on its response. Every later
   request (a page load, a server function) is signed in only when the browser sends that cookie back. A session
   lasts 7 days.
@@ -181,6 +193,8 @@ why. Clicks are never ignored, and the calls reach the server in the order they 
 
 - `await authClient.signUp.email({ name, email, password })`
 - `await authClient.signIn.email({ email, password })`
+- `await authClient.signIn.social({ provider: 'google', callbackURL: '/dashboard' })` leaves for Google's sign-in page
+  and comes back signed in to `callbackURL`; only when `getSignInOptions()` says `google` is on.
 - `await authClient.signOut()`
 - `const { data: session, isPending } = authClient.useSession()`
 - `await authClient.requestPasswordReset({ email, redirectTo: '/reset-password' })` emails a link that works for one
@@ -196,6 +210,10 @@ why. Clicks are never ignored, and the calls reach the server in the order they 
 - In routes: `import { getSessionUser } from '@/lib/session'`, then `const user = await getSessionUser()`, which is
   `null` for a signed-out visitor. Protect a page in its `beforeLoad`:
   `const user = await getSessionUser(); if (!user) throw redirect({ to: '/login' })`.
+- If a parent route needs a profile or role, use one server function that returns the profile (or `null` when signed
+  out) in `beforeLoad`. Do not call `getSessionUser()` first and then a profile function that calls `currentUser()`:
+  those are separate browser requests and repeat the session database lookup on every child navigation. Keep the
+  profile function's session check on the server, and authorize each data server function independently.
 - In server functions (`src/server/*.ts`): `import { currentUser, requireUser } from '@/lib/session.server'`.
   `requireUser()` throws `Please sign in to continue` when the request has no session; `currentUser()` returns
   `null` instead. A user is `{ id, email, name, image }` (`SessionUser`).
@@ -238,6 +256,9 @@ Look before you change anything, and tell the user what you found.
 
 - Every app has one SQLite database: managed by MonstarX in the preview, Cloudflare D1 (bound as `DB`) when
   published. `getDb()` from `@/lib/db` returns Drizzle; call it inside server function handlers only.
+- The driver is asynchronous: **await every query**, `.all()`, `.get()` and `.run()` included —
+  `const rows = await db.select().from(classes).all()`. Without `await` the value is a promise, and the page crashes
+  with "rows.map is not a function".
 - A table exists twice and both must match: the Drizzle table in `src/db/schema.ts`, and the SQL that creates it,
   applied with `add_migration` and saved as `migrations/NNNN_<name>.sql`. `src/db/schema.ts` re-exports the built-in
   tables, so `import { user, session } from '@/db/schema'` works.
@@ -312,17 +333,151 @@ Only while Storage is on for this app in MonstarX Cloud.
 
 Only while AI (and, for `ai.search`, Web Search) is on for this app in MonstarX Cloud.
 
+**Fair use.** The AI is for this app's own features, used by the people using the app through its own pages. An app
+must never pass it on to other programs: no OpenAI-, Anthropic- or Gemini-compatible endpoint (`/v1/chat/completions`,
+`/v1/models`…), proxy, gateway or relay that forwards a caller's prompts or conversations, and never expose
+`MONSTARX_DATA_TOKEN` or `MONSTARX_AI_URL`. MonstarX scans apps for this: such an app cannot be published and its AI
+answers 403. The AI also answers 429 past 30 text requests a minute or the app's daily limits; call it on explicit user
+actions.
+
 - `import { ai } from '@/lib/ai'` in server functions and server routes.
 - `await ai.generateText({ prompt })`, or `({ messages, system, temperature, maxTokens })`, returns
   `{ text, model, usage }`. Message content may include `{ type: 'image_url', image_url: { url } }` parts.
-- `await ai.generateJson<T>({ prompt })` returns the parsed value; describe the JSON shape in the prompt. It throws
-  when the model's answer is not valid JSON.
+- `await ai.generateJson({ prompt, schema: z.object({ ... }) })` sends a JSON Schema to the model and checks the
+  response against the Zod schema locally. The schema must describe an object; wrap a list in an object field.
+  `validate` can add checks across fields. Calls without `schema` still parse JSON and may use `validate`.
 - `await ai.streamText({ messages })` returns a stream of text chunks: return `new Response(await ai.streamText(...))`
   from a server route and read `response.body` in the browser.
 - `await ai.search({ query, maxResults })` returns `{ answer, sources: [{ title, url, snippet }], model }`.
 - `await ai.generateImage({ prompt, size })` returns `{ url, key, model }`; the image is stored with the app's files.
+- `await ai.generateSpeech({ text, language?, model?, voice? })` returns an MP3 **Response**, ready to return
+  from a server route. `text` is plain text, 1–4000 characters; `language` defaults to `en`.
+- `await ai.transcribe({ audio: file, language?, model? })` returns `{ text, model, usage: { seconds, costUsd,
+  costEstimated } }`. `audio` is a Blob/File, 1 byte–10 MiB; preserve its MIME type or filename. An omitted
+  two-letter `language` means auto-detect. `costUsd` is provider cost before MonstarX credit markup.
 - MonstarX picks the models and holds the keys. Each app may make 300 AI requests and 30 images a day, so call the AI
-  when someone asks for it, never on a page load.
+  when someone asks for it, never on a page load. Text, search, speech and transcription share the request limit;
+  these defaults are host-configurable. A complete spoken AI turn normally uses three requests.
+
+### Voice apps: ordinary HTTP, no extra infrastructure
+
+Use the helpers above **only on the server**. The existing AI Cloud switch enables voice too; no connector, extra
+key, WebSocket server, GPU or audio conversion service is needed. Keep project tokens out of the browser.
+
+| Task | Automatic model selection |
+| --- | --- |
+| English speech (`language: 'en'`, or omitted) | `deepgram/flux-tts:free` → `fish-audio/s2.1-pro-free:free` on availability failure |
+| Other spoken languages (e.g. `language: 'ja'`) | `fish-audio/s2.1-pro-free:free` |
+| Mono, 16 kHz, 16-bit PCM WAV transcription | `meta/muse-voice-transcribe-1.0` → Fish → Whisper |
+| Other WAV, MP3, MP4/M4A, FLAC, Ogg transcription | `fish-audio/transcribe-1` → `openai/whisper-1` |
+| WebM browser recordings | `openai/whisper-1` (Fish rejects WebM) |
+| AAC transcription | `fish-audio/transcribe-1` |
+
+An explicit `model` disables fallback and must accept the supplied format. TTS `voice` also pins Flux; examples
+are `flux-paige-en` (default), `flux-alexis-en`, `flux-kai-en`, `flux-marcus-en`, `flux-meena-en`, `flux-wade-en`.
+Omit `voice` for Fish; it selects its own default. Set `language` explicitly for non-English speech; it selects a
+multilingual model but does not translate text. Supply text in the language you want spoken. Voice cloning and
+provider-specific options are not part of this helper. Free speech models have provider limits and no guaranteed
+availability; there is no automatic upgrade to paid speech. Transcription uses the owner's AI allowance.
+
+**Transcription route**, for example `src/routes/api/voice/transcribe.ts`:
+
+```ts
+import { createFileRoute } from '@tanstack/react-router'
+import { ai } from '@/lib/ai'
+import { currentUser } from '@/lib/session.server'
+
+export const Route = createFileRoute('/api/voice/transcribe')({
+  server: { handlers: { POST: async ({ request }) => {
+    if (!await currentUser()) return Response.json({ error: 'Please sign in' }, { status: 401 })
+    try {
+      const form = await request.formData()
+      const audio = form.get('file')
+      if (!(audio instanceof Blob)) return Response.json({ error: 'Select an audio file' }, { status: 400 })
+      return Response.json(await ai.transcribe({ audio }, request.signal), { headers: { 'cache-control': 'no-store' } })
+    } catch {
+      return Response.json({ error: 'Could not transcribe this recording. Try a shorter clip or another format.' }, { status: 502 })
+    }
+  } } },
+})
+```
+
+**Speech route**, `src/routes/api/voice/speech.ts`, follows the same authorization pattern. Its POST handler reads
+`{ text, language }` from JSON and returns `await ai.generateSpeech({ text, language }, request.signal)` directly.
+Do not JSON-serialize that Response, use a server function to return it, or put its bytes into a database text field.
+For public apps, apply the app's own guest rate limits instead of removing authorization without a replacement.
+
+**Browser recording and upload:** use `navigator.mediaDevices.getUserMedia({ audio: true })` after a Record
+button click. Select a supported MediaRecorder MIME type using `MediaRecorder.isTypeSupported`, preferring
+`audio/webm;codecs=opus`, then `audio/mp4`. If neither works, offer file upload. Preserve `recorder.mimeType`
+in the resulting Blob; do not rename WebM bytes to `.wav`. Collect `dataavailable` chunks, call
+`recorder.start(250)`, and stop when the user clicks Stop, after 60 seconds, or before accumulated chunks exceed
+10 MiB. In `stop`, `error`, cancel and unmount cleanup, call `stream.getTracks().forEach(track => track.stop())`
+and clear timers. Create the Blob only after the recorder's final `dataavailable` and `stop` events.
+
+```ts
+// recordedBlob is the completed MediaRecorder Blob, with its original MIME type.
+const form = new FormData()
+form.set('file', recordedBlob)
+const response = await fetch('/api/voice/transcribe', { method: 'POST', body: form })
+const result = await response.json()
+if (!response.ok) throw new Error(result.error ?? 'Transcription failed')
+// Show result.text in an editable field. Empty text means no speech was recognized.
+```
+
+Do not set `Content-Type` on a FormData upload; the browser supplies the boundary. Show clear states for recording,
+uploading, processing and failure. Recording needs HTTPS (or localhost), a real user permission grant, and a
+supported browser. MonstarX's preview iframe allows the microphone. If the embedded browser blocks access, use
+the preview's Open in new tab button. Offer file upload when recording is unavailable or denied.
+
+**Playback:** POST text to the app's speech route; read the result as a Blob and use it with `<audio controls>`.
+
+```ts
+const response = await fetch('/api/voice/speech', {
+  method: 'POST', headers: { 'content-type': 'application/json' },
+  body: JSON.stringify({ text: 'Hello!', language: 'en' }),
+})
+if (!response.ok) throw new Error('Speech generation failed')
+const url = URL.createObjectURL(await response.blob())
+// Assign url to <audio controls src={url}>. Revoke the previous URL on replacement/unmount.
+```
+
+Use a Play button or audio controls: browsers may block automatic playback after an asynchronous call. Revoke
+object URLs and stop old playback when starting a new recording. Generated audio is not stored automatically;
+use the app's storage helper if the user explicitly wants to save it.
+
+For a **voice conversation**, compose `transcribe → generateText → generateSpeech` on authorized server routes.
+Keep the recognized transcript and reply text visible, manage the conversation history in the app, and instruct
+the text model to give short, plain-text spoken replies (e.g. `maxTokens: 300`). A speech failure should leave the
+text reply usable. The API returns a complete MP3; it does not provide continuous listening, live partial captions,
+automatic interruptions, phone calling, or full-duplex speech. These are recorded, turn-based interactions.
+
+## Country data
+
+Live public data — weather, transport, places and addresses, business registries, prices, holidays, public health and
+more — from the country data servers MonstarX hosts, for Singapore (`sg`), Japan (`jp`), Malaysia (`my`), India
+(`in`), Indonesia (`id`), the UAE (`uae`) and the Philippines (`ph`). No account and no key.
+
+- Only for the countries the owner switched on in Backend → Country data. A country that is off answers 403: ask for
+  it with `request_country_data` instead of writing calls to it, and never call a government API yourself instead.
+- `import { countryData } from '@/lib/monstarx/country-data'` in server functions and server routes.
+- `await countryData.call('sg', 'sg_carpark_availability')` or `await countryData.call('jp', 'jp_postal_code', { code })`
+  returns what the tool answered. The country servers answer JSON with the data and where it came from, usually
+  `{ source, retrieved_at, license, agency, data }`, and the shape of `data` is each tool's own: call the tool with
+  `call_mcp_tool` (server `country:<id>`) and read its real answer before writing the code that uses it.
+- `await countryData.tools('sg')` lists a country's tools with the JSON Schema of their arguments. The builder sees the
+  same list with `list_mcp_tools`. Tool names start with the country (`sg_`, `jp_`, …); India's also have state tools
+  (`ka_`, `mh_`, `dl_`, …) and the UAE's emirate ones (`dubai_`, `abudhabi_`, …).
+- A call that does not return data throws `CountryDataError` with a `status`: 403 the country is off, 422 the tool
+  refused the arguments (its message says why: an unknown postal code, a missing argument), 429 the day's calls are
+  spent, 502 the data service could not be reached. Catch it where the data is shown and show what is wrong in the
+  app's own words; never let it blank the page.
+- Each app may make 5,000 calls a day. The data is live, so read it when a page is opened or on a refresh button, and
+  keep what the app needs to remember (a user's saved car park, a price history) in its own database.
+- Show the source the answer names (`source`, `agency`, `license`) somewhere near the data, as the open data licences
+  ask.
+- Times inside `data` are usually the country's local time, often with no offset (data.gov.sg's `update_datetime` is
+  Singapore time): add the country's offset before comparing them with `Date.now()`, or show them as they are.
 
 ## Maps
 
@@ -341,7 +496,7 @@ network and no WebGL, and it renders in a screenshot.
 
 ```tsx
 import { useState } from 'react'
-import { WorldMap, type Country } from '@/lib/monstarx/world'
+import { WorldMap, countryName, type Country } from '@/lib/monstarx/world'
 
 const [country, setCountry] = useState<Country | null>(null)
 
@@ -351,18 +506,20 @@ const [country, setCountry] = useState<Country | null>(null)
   values={{ JP: 42, BR: 17 }}    // optional: colours countries by a number, keyed by ISO alpha-2
   className="w-full"
 />
-{country ? <h2>Top stories from {country.name}</h2> : <p>Pick a country on the map.</p>}
+{country ? <h2>Top stories from {countryName(country)}</h2> : <p>Pick a country on the map.</p>}
 ```
 
 - `Country` is `{ code, code3, name, region, subregion, lat, lon }` — `code` is the ISO alpha-2 ("JP"), which is
-  what every prop here works in.
+  what every prop here works in. `name` is English: wherever people read a country's name, show
+  `countryName(country)` (or `countryName('JP')`), which names it in the page's language (`<html lang>`: "日本",
+  "Japão", "일본") — the map's tooltip and labels already do.
 - Countries are keyboard reachable and announce their name, so a map is never the only way to choose one.
 - Other props: `highlight` (codes drawn in the accent colour), `disabled`, `markers` (`{ lat, lon, label }`),
   `focus` (a country code, a region name such as `'Europe'`, or a lat/lon box) to frame part of the world,
   `projection` (`'natural'`, `'equirectangular'`, `'mercator'`), `colors`, `formatTooltip`, and `children`
   rendered over the map for a legend.
 - Pair it with a search box: `searchCountries(query)` returns matching countries, `findCountry(query)` the best
-  single match for an ISO code or a name.
+  single match for an ISO code or a name — in English or in the page's language.
 
 ### `<Map>` — a street map you can pan and zoom
 
@@ -567,13 +724,19 @@ a blank page, and tell the owner what to switch on in the Firebase console.
 `parseServiceAccount`, `firebaseConfigFrom`, `toFirestoreValue`, `toFirestoreFields`, `fromFirestoreValue` and
 `fromFirestoreFields` are the pieces it is made of; app code rarely needs them.
 
+## Publishing on Vercel
+
+The owner can connect Vercel under **Publish → Other hosting → Vercel**, then deploy a preview or production version and manage that Vercel project's domains and environment variables. This is a publishing connection held by MonstarX: the Vercel access token is not an app secret, is never available to this code, and should never be requested with `request_connector` for use in `process.env`.
+
+MonstarX supplies a TanStack Start/Nitro build configuration for this app's Vercel deployment. Its database, mail, AI and file storage still use the MonstarX host through the managed service URLs and token; they are not automatically replaced by Vercel storage products. User-defined secrets from Backend → Secrets are synchronized to encrypted Vercel environment variables on each deploy. Changes to those values need a new deployment. Variables with a `VITE_` prefix may be included in browser code, so they must hold public values only.
+
 ## Configuration and secrets
 
 - Secrets the owner adds under Backend → Secrets, and the keys of connected services, are environment variables:
   read `process.env.NAME` in server code only.
 - `PUBLIC_*` values may reach the browser: `const env = await getPublicEnv()` (from `@/lib/config`) in a route loader.
 - MonstarX sets `MONSTARX_DATA_URL`, `MONSTARX_DATA_TOKEN`, `MONSTARX_MAIL_URL`, `MONSTARX_AI_URL`,
-  `MONSTARX_STORAGE_URL` and `BETTER_AUTH_SECRET`, plus `MONSTARX_PREVIEW=1` in previews, and
+  `MONSTARX_STORAGE_URL`, `MONSTARX_COUNTRY_DATA_URL` and `BETTER_AUTH_SECRET`, plus `MONSTARX_PREVIEW=1` in previews, and
   `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_API_TOKEN` and `MONSTARX_CF_RESOURCES` when a Cloudflare account is
   connected. The helpers above use them: never read, print or replace them yourself. Names starting with
   `MONSTARX_`, `BETTER_AUTH_` or `CLOUDFLARE_` are reserved.
@@ -600,11 +763,11 @@ For AI data that drives the UI or is saved, validate the shape at runtime:
 
 ```ts
 const architecture = await ai.generateJson({
-  prompt: 'Return the complete architecture JSON matching this schema: ...',
-  validate: (value) => architectureSchema.parse(value),
+  prompt: 'Return a concise architecture for this project.',
+  schema: architectureSchema,
 })
 ```
 
-`validate` is local server code (it is never sent over the API). `generateJson` parses JSON, tolerates a JSON markdown fence, and retries invalid JSON or schema output once with validation feedback. Set `repair: false` to disable repair. Successful calls do not add another model call. Validate references as well as object shape before saving. Network, authentication and quota errors are not retried by this helper. Show recoverable errors in the UI; log the underlying cause server-side instead of discarding it.
+`schema` is converted to JSON Schema and sent to a provider that supports structured output; Zod also checks the returned value locally. `validate` stays on the server for checks such as references to other records. `generateJson` tolerates a JSON markdown fence and retries invalid JSON or schema output once with validation feedback. Set `repair: false` to disable repair. Successful calls do not add another model call. Network, authentication and quota errors are not retried by this helper. A response cut off by the output limit gets a distinct error. Show recoverable errors in the UI; log the underlying cause server-side instead of discarding it.
 
 Reuse `useAction`/`useOptimisticAction` for writes, including loading, double-click protection, errors and refresh. Await critical persistence first. Treat optional receipt/notification delivery as a separate outcome: a failed email must not make a completed booking appear unsaved. Never put required security actions (OTP delivery or verification) in that optional path.

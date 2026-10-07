@@ -45,7 +45,10 @@ export interface SeoConfig {
   titleTemplate: string
   defaultDescription: string
   keywords: string[]
-  /** BCP 47, e.g. "en", "en-GB", "de". */
+  /**
+   * BCP 47, e.g. "en", "en-GB", "de". Empty until the owner sets it in the SEO/GEO tab: the root route's own language
+   * (`<html lang={seoConfig.locale || 'sw-KE'}>`) stands until then.
+   */
   locale: string
   themeColor: string
   /** The social card shown when a link is shared (1200×630 works everywhere). */
@@ -109,7 +112,9 @@ export const DEFAULT_SEO: SeoConfig = {
   titleTemplate: '%s',
   defaultDescription: '',
   keywords: [],
-  locale: 'en',
+  // Not 'en': a default here outranked the language the app was built in (`lang={seoConfig.locale || 'sw-KE'}`), so a
+  // Swahili or Hausa app declared English — English country names, an English spell-checker, an English screen reader.
+  locale: '',
   themeColor: '',
   image: null,
   imageAlt: '',

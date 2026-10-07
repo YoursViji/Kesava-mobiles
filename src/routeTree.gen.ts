@@ -40,6 +40,7 @@ import { Route as ServiceIndexRouteImport } from './routes/service.index'
 import { Route as ServiceTrackRouteImport } from './routes/service.track'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth.$'
 import { Route as ApiFilesSplatRouteImport } from './routes/api/files.$'
+import { Route as ApiServicePhotosIdRouteImport } from './routes/api/service-photos.$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -196,6 +197,11 @@ const ApiFilesSplatRoute = ApiFilesSplatRouteImport.update({
   path: '/api/files/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiServicePhotosIdRoute = ApiServicePhotosIdRouteImport.update({
+  id: '/api/service-photos/$id',
+  path: '/api/service-photos/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -229,6 +235,7 @@ export interface FileRoutesByFullPath {
   '/service/': typeof ServiceIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/files/$': typeof ApiFilesSplatRoute
+  '/api/service-photos/$id': typeof ApiServicePhotosIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -261,6 +268,7 @@ export interface FileRoutesByTo {
   '/service': typeof ServiceIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/files/$': typeof ApiFilesSplatRoute
+  '/api/service-photos/$id': typeof ApiServicePhotosIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -295,6 +303,7 @@ export interface FileRoutesById {
   '/service/': typeof ServiceIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/files/$': typeof ApiFilesSplatRoute
+  '/api/service-photos/$id': typeof ApiServicePhotosIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -330,6 +339,7 @@ export interface FileRouteTypes {
     | '/service/'
     | '/api/auth/$'
     | '/api/files/$'
+    | '/api/service-photos/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -362,6 +372,7 @@ export interface FileRouteTypes {
     | '/service'
     | '/api/auth/$'
     | '/api/files/$'
+    | '/api/service-photos/$id'
   id:
     | '__root__'
     | '/'
@@ -395,6 +406,7 @@ export interface FileRouteTypes {
     | '/service/'
     | '/api/auth/$'
     | '/api/files/$'
+    | '/api/service-photos/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -427,6 +439,7 @@ export interface RootRouteChildren {
   MobilesIndexRoute: typeof MobilesIndexRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
   ApiFilesSplatRoute: typeof ApiFilesSplatRoute
+  ApiServicePhotosIdRoute: typeof ApiServicePhotosIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -648,6 +661,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiFilesSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/service-photos/$id': {
+      id: '/api/service-photos/$id'
+      path: '/api/service-photos/$id'
+      fullPath: '/api/service-photos/$id'
+      preLoaderRoute: typeof ApiServicePhotosIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -694,6 +714,7 @@ const rootRouteChildren: RootRouteChildren = {
   MobilesIndexRoute: MobilesIndexRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
   ApiFilesSplatRoute: ApiFilesSplatRoute,
+  ApiServicePhotosIdRoute: ApiServicePhotosIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -3,7 +3,8 @@ import { createFileRoute, Link } from '@tanstack/react-router'
 import { useState } from 'react'
 import { Wrench, ShieldCheck, Clock, CheckCircle2 } from 'lucide-react'
 import { useAction } from '@/lib/actions'
-import { createServiceBooking } from '@/server/service'
+import { createServiceBookingWithPhotos } from '@/server/service'
+import { DamagePhotoPicker } from '@/components/DamagePhotoPicker'
 import { deliveryModes, serviceTypes } from '@/data/options'
 import { estimateRepairRange } from '@/lib/repairEstimate'
 import { useLang } from '@/lib/i18n'
@@ -26,11 +27,12 @@ function ServicePage() {
     deliveryMode: deliveryModes[0] as (typeof deliveryModes)[number],
     pickupAddress: '',
   })
-  const [result, setResult] = useState<{ trackingCode: string } | null>(null)
+  const [photos, setPhotos] = useState<File[]>([])
+  const [result, setResult] = useState<{ trackingCode: string; photoCount: number; photoWarning: string | null } | null>(null)
 
   const { t } = useLang()
-  const book = useAction(createServiceBooking, {
-    onSuccess: (data) => setResult({ trackingCode: data.trackingCode }),
+  const book = useAction(createServiceBookingWithPhotos, {
+    onSuccess: (data) => { setResult(data); setPhotos([]) },
   })
 
   if (result) {
@@ -42,6 +44,8 @@ function ServicePage() {
         <p className="mt-5 rounded-2xl border-2 border-dashed border-brand-300 bg-brand-50 py-4 text-2xl font-extrabold tracking-widest text-brand-700">
           {result.trackingCode}
         </p>
+        {result.photoCount ? <p className="mt-3 text-sm text-neutral-600">{result.photoCount} damage photo(s) attached for staff review.</p> : null}
+        {result.photoWarning ? <p className="mt-3 rounded-xl bg-amber-50 p-3 text-sm text-amber-900">{result.photoWarning}</p> : null}
         <div className="mt-6 flex flex-wrap justify-center gap-3">
           <Link to="/service/track" search={{ code: result.trackingCode }} className="rounded-full bg-brand-600 px-5 py-2.5 text-sm font-bold text-white">
             {t('track_this')}
@@ -79,13 +83,10 @@ function ServicePage() {
           className="rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm"
           onSubmit={(e) => {
             e.preventDefault()
-            book.run({
-              data: {
-                ...form,
-                serviceType: form.serviceType as (typeof serviceTypes)[number],
-                deliveryMode: form.deliveryMode,
-              },
-            })
+            const data = new FormData()
+            data.set('booking', JSON.stringify(form))
+            photos.forEach((photo) => data.append('photos', photo))
+            book.run({ data })
           }}
         >
           <div className="grid gap-4 sm:grid-cols-2">
@@ -164,13 +165,15 @@ function ServicePage() {
             </Field>
           ) : null}
 
+          <DamagePhotoPicker files={photos} onChange={setPhotos} />
+
           {book.error ? <p className="mt-3 text-sm font-medium text-red-600">{book.error}</p> : null}
 
           <button
             type="submit"
             className="mt-5 w-full rounded-full bg-brand-600 py-3 text-sm font-bold text-white hover:bg-brand-700 disabled:opacity-70"
           >
-            {book.pending ? t('booking_pending') : t('book_btn')}
+            {book.pending ? (photos.length ? 'Uploading photos & booking…' : t('booking_pending')) : t('book_btn')}
           </button>
         </form>
       </div>

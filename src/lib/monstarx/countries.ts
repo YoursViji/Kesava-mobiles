@@ -6,7 +6,7 @@ export interface Country {
   code: string
   /** ISO 3166-1 alpha-3, e.g. "JPN". */
   code3: string
-  /** English name, e.g. "Japan". */
+  /** English name, e.g. "Japan". People read `countryName(country)`, in the app's language. */
   name: string
   /** UN region, e.g. "Asia". */
   region: string
@@ -264,37 +264,79 @@ export function countryByCode(code: string): Country | undefined {
   return BY_CODE.get(code.trim().toUpperCase())
 }
 
+/** The language country names are shown in: the page's own (<html lang>), English on the server. */
+function pageLanguage(): string {
+  return (typeof document !== 'undefined' && document.documentElement.lang) || 'en'
+}
+
+const regionNames = new Map<string, Intl.DisplayNames | null>()
+
 /**
- * Find a country from whatever the user typed: an ISO code ("JP", "JPN") or a name,
- * exactly, then by prefix, then by any substring. Returns undefined when nothing matches.
+ * A country's name in the app's language: countryName('JP') is "日本" on a Japanese page, "Japón" on a Spanish one and
+ * "Japan" in English. Show this, not `country.name` (always English), wherever people read a country's name. The
+ * names are the browser's own (Intl.DisplayNames); pass `locale` to choose one, e.g. on the server.
  */
-export function findCountry(query: string): Country | undefined {
-  const q = query.trim().toLowerCase()
+export function countryName(country: Country | string, locale: string = pageLanguage()): string {
+  const found = typeof country === 'string' ? countryByCode(country) : country
+  const code = typeof country === 'string' ? country.trim().toUpperCase() : country.code
+  if (/^en\b/i.test(locale) && found) return found.name
+  let names = regionNames.get(locale)
+  if (names === undefined) {
+    try {
+      names = new Intl.DisplayNames([locale, 'en'], { type: 'region', fallback: 'none' })
+    } catch {
+      names = null
+    }
+    regionNames.set(locale, names)
+  }
+  let local: string | undefined
+  try {
+    local = names?.of(code)
+  } catch {
+    local = undefined
+  }
+  return local || found?.name || code
+}
+
+/** A country's names to match a search against: English and the app's language, lower-cased. */
+function namesOf(country: Country, locale: string): string[] {
+  const english = country.name.toLowerCase()
+  const local = countryName(country, locale).toLocaleLowerCase(locale)
+  return local === english ? [english] : [english, local]
+}
+
+/**
+ * Find a country from whatever the user typed: an ISO code ("JP", "JPN") or a name, in English or in the app's
+ * language, exactly, then by prefix, then by any substring. Returns undefined when nothing matches.
+ */
+export function findCountry(query: string, locale: string = pageLanguage()): Country | undefined {
+  const q = query.trim().toLocaleLowerCase(locale)
   if (!q) return undefined
   const upper = q.toUpperCase()
   const exactCode = COUNTRIES.find((c) => c.code === upper || c.code3 === upper)
   if (exactCode) return exactCode
+  const named = COUNTRIES.map((country) => ({ country, names: namesOf(country, locale) }))
   return (
-    COUNTRIES.find((c) => c.name.toLowerCase() === q) ??
-    COUNTRIES.find((c) => c.name.toLowerCase().startsWith(q)) ??
-    COUNTRIES.find((c) => c.name.toLowerCase().includes(q))
-  )
+    named.find((c) => c.names.some((name) => name === q)) ??
+    named.find((c) => c.names.some((name) => name.startsWith(q))) ??
+    named.find((c) => c.names.some((name) => name.includes(q)))
+  )?.country
 }
 
-/** Every country whose name, code, region or subregion matches — for a search box or a filter list. */
-export function searchCountries(query: string, limit = 10): Country[] {
-  const q = query.trim().toLowerCase()
+/** Every country whose name (English or the app's language), code, region or subregion matches — for a search box or a filter list. */
+export function searchCountries(query: string, limit = 10, locale: string = pageLanguage()): Country[] {
+  const q = query.trim().toLocaleLowerCase(locale)
   if (!q) return []
   const scored = COUNTRIES.map((country) => {
-    const name = country.name.toLowerCase()
+    const names = namesOf(country, locale)
     if (country.code.toLowerCase() === q || country.code3.toLowerCase() === q) return { country, score: 0 }
-    if (name === q) return { country, score: 1 }
-    if (name.startsWith(q)) return { country, score: 2 }
-    if (name.includes(q)) return { country, score: 3 }
+    if (names.some((name) => name === q)) return { country, score: 1 }
+    if (names.some((name) => name.startsWith(q))) return { country, score: 2 }
+    if (names.some((name) => name.includes(q))) return { country, score: 3 }
     if (`${country.region} ${country.subregion}`.toLowerCase().includes(q)) return { country, score: 4 }
     return { country, score: Infinity }
   }).filter((entry) => entry.score !== Infinity)
-  scored.sort((a, b) => a.score - b.score || a.country.name.localeCompare(b.country.name, 'en'))
+  scored.sort((a, b) => a.score - b.score || countryName(a.country, locale).localeCompare(countryName(b.country, locale), locale))
   return scored.slice(0, limit).map((entry) => entry.country)
 }
 

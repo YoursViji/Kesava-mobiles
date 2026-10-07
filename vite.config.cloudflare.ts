@@ -54,8 +54,8 @@ function tailwindAppSources(): Plugin {
 // Used by `npm run deploy`: builds the app as a Cloudflare Worker (SSR in workerd).
 export default defineConfig({
   resolve: { tsconfigPaths: true },
-  // maplibre-gl (the engine behind <Map>) ships its renderer as a web worker the dependency
-  // pre-bundler does not emit; served as source it works, in dev and in the build.
+  // Keep MapLibre out of Vite's dependency pre-bundler in dev. The managed <Map> component
+  // imports its worker with ?worker&url so published builds emit the worker and its shared module.
   optimizeDeps: { exclude: ['maplibre-gl'] },
   // tailwindAppSources must come before tailwindcss: both run first ("pre"), in this order.
   plugins: [cloudflare({ viteEnvironment: { name: 'ssr' } }), tailwindAppSources(), tailwindcss(), tanstackStart(), viteReact()],

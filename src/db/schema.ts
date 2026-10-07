@@ -55,6 +55,15 @@ export const serviceBookings = sqliteTable('service_bookings', {
 })
 export type ServiceBooking = typeof serviceBookings.$inferSelect
 
+export const servicePhotos = sqliteTable('service_photos', {
+  id: text('id').primaryKey(),
+  bookingId: text('booking_id').notNull().references(() => serviceBookings.id),
+  storageKey: text('storage_key').notNull(),
+  fileName: text('file_name').notNull(),
+  createdAt: text('created_at').notNull(),
+})
+export type ServicePhoto = typeof servicePhotos.$inferSelect
+
 export const demoBookings = sqliteTable('demo_bookings', {
   id: text('id').primaryKey(),
   bookingCode: text('booking_code').notNull().unique(),
@@ -130,6 +139,10 @@ export const orders = sqliteTable('orders', {
   deliveryAddress: text('delivery_address'),
   deliveryFee: real('delivery_fee').notNull().default(0),
   deliveryStatus: text('delivery_status'),
+  simCarrier: text('sim_carrier'),
+  simPlan: text('sim_plan'),
+  simStatus: text('sim_status'),
+  simNumber: text('sim_number'),
 })
 export type Order = typeof orders.$inferSelect
 

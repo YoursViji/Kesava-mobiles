@@ -1,18 +1,17 @@
 import { createFileRoute, redirect } from '@tanstack/react-router'
 import { Truck } from 'lucide-react'
-import { getSessionUser } from '@/lib/session'
+import { useState } from 'react'
+import { SIM_STATUSES } from '@/data/sim'
 import { checkIsAdmin } from '@/server/admin'
-import { adminListOrders, adminUpdateDeliveryStatus } from '@/server/orders'
+import { adminListOrders, adminUpdateDeliveryStatus, adminUpdateSimRequest } from '@/server/orders'
 import { DELIVERY_STATUSES } from '@/data/options'
 import { AdminNav } from '@/components/AdminNav'
-import { useOptimisticAction } from '@/lib/actions'
+import { useAction, useOptimisticAction } from '@/lib/actions'
 import type { Order, OrderItem } from '@/db/schema'
 
 export const Route = createFileRoute('/admin/sales')({
   component: AdminSalesPage,
   beforeLoad: async () => {
-    const user = await getSessionUser()
-    if (!user) throw redirect({ to: '/admin/login' })
     const { isAdmin } = await checkIsAdmin()
     if (!isAdmin) throw redirect({ to: '/admin/login' })
   },
@@ -63,6 +62,7 @@ function OrderRow({ order }: { order: Order & { items: OrderItem[] } }) {
           </select>
         </div>
       ) : null}
+      {order.simCarrier ? <SimRequest order={order} /> : null}
       <ul className="mt-3 space-y-1 border-t border-neutral-100 pt-3 text-sm text-neutral-600">
         {order.items.map((item) => (
           <li key={item.id} className="flex justify-between">
@@ -73,6 +73,24 @@ function OrderRow({ order }: { order: Order & { items: OrderItem[] } }) {
       </ul>
     </div>
   )
+}
+
+function SimRequest({ order }: { order: Order }) {
+  const [status, setStatus] = useState<(typeof SIM_STATUSES)[number]>((order.simStatus ?? 'requested') as (typeof SIM_STATUSES)[number])
+  const [number, setNumber] = useState(order.simNumber ?? '')
+  const [saved, setSaved] = useState(false)
+  const save = useAction(adminUpdateSimRequest, { onSuccess: () => setSaved(true) })
+  return <section className="mt-3 rounded-xl border border-brand-200 bg-brand-50 p-3">
+    <h2 className="text-sm font-bold text-brand-900">{order.simCarrier} SIM · {order.simPlan}</h2>
+    <p className="mt-1 text-xs text-neutral-600">Current status: {order.simStatus}. Confirm the current tariff and complete operator identity checks before activation.</p>
+    <form className="mt-2 flex flex-wrap items-end gap-2" onSubmit={(e) => { e.preventDefault(); setSaved(false); save.run({ data: { id: order.id, status, number } }) }}>
+      <label className="text-xs">SIM status<select className="input mt-1" value={status} onChange={(e) => setStatus(e.target.value as typeof status)}>{SIM_STATUSES.map((s) => <option key={s}>{s}</option>)}</select></label>
+      <label className="text-xs">Assigned mobile number<input className="input mt-1" value={number} onChange={(e) => setNumber(e.target.value)} inputMode="numeric" maxLength={10} /></label>
+      <button className="rounded-full bg-brand-600 px-4 py-2 text-sm font-bold text-white hover:bg-brand-700">{save.pending ? 'Saving…' : 'Save SIM request'}</button>
+    </form>
+    {save.error ? <p className="mt-2 text-sm text-red-700">{save.error}</p> : null}
+    {saved ? <p className="mt-2 text-sm text-emerald-800">SIM request updated.</p> : null}
+  </section>
 }
 
 function AdminSalesPage() {

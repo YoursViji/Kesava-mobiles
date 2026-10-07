@@ -17,7 +17,44 @@
 import { useOptimistic, useRef, useState, useTransition } from 'react'
 import { useRouter } from '@tanstack/react-router'
 
-function messageOf(error: unknown): string {
+type AuthFailure = 'credentials' | 'exists' | 'email' | 'short' | 'tooMany' | 'generic'
+
+/**
+ * Better Auth's errors in the app's own language, by `<html lang>` (MonstarX stamps every app with the language it is made
+ * in): a Tamil, Swahili or Bangla app answered a sign-up with "User already exists. Use another email." in English.
+ * `script` is the app's writing system: a message without it (the provider's English) gives way to the general line; a
+ * language written in Latin letters keeps a message it cannot tell from its own, unless it is a provider error code.
+ */
+const AUTH_MESSAGES: Record<string, { script?: RegExp } & Record<AuthFailure, string>> = {
+  ja: { script: /[\u3040-\u30ff\u3400-\u9fff]/u, credentials: 'メールアドレスまたはパスワードが正しくありません。', exists: 'このメールアドレスはすでに登録されています。', email: 'メールアドレスを確認してください。', short: 'パスワードが短すぎます。', tooMany: '操作が多すぎます。少し待ってからもう一度お試しください。', generic: '問題が発生しました。もう一度お試しください。' },
+  zh: { script: /[\u3400-\u9fff]/u, credentials: '邮箱或密码不正确。', exists: '该邮箱已注册。', email: '请检查邮箱地址。', short: '密码太短。', tooMany: '操作过于频繁，请稍后再试。', generic: '出了点问题，请重试。' },
+  ko: { script: /[\uac00-\ud7a3]/u, credentials: '이메일 또는 비밀번호가 올바르지 않습니다.', exists: '이미 가입된 이메일입니다.', email: '이메일 주소를 확인해 주세요.', short: '비밀번호가 너무 짧습니다.', tooMany: '요청이 너무 많습니다. 잠시 후 다시 시도해 주세요.', generic: '문제가 발생했습니다. 다시 시도해 주세요.' },
+  pt: { credentials: 'E-mail ou senha incorretos.', exists: 'Este e-mail já está cadastrado.', email: 'Confira o endereço de e-mail.', short: 'A senha é curta demais.', tooMany: 'Muitas tentativas. Aguarde um pouco e tente de novo.', generic: 'Algo deu errado. Tente de novo.' },
+  ms: { credentials: 'E-mel atau kata laluan tidak betul.', exists: 'E-mel ini sudah didaftarkan.', email: 'Sila semak alamat e-mel.', short: 'Kata laluan terlalu pendek.', tooMany: 'Terlalu banyak cubaan. Tunggu sebentar dan cuba lagi.', generic: 'Ada masalah. Sila cuba lagi.' },
+  id: { credentials: 'Email atau kata sandi salah.', exists: 'Email ini sudah terdaftar.', email: 'Periksa alamat email Anda.', short: 'Kata sandi terlalu pendek.', tooMany: 'Terlalu banyak percobaan. Tunggu sebentar lalu coba lagi.', generic: 'Terjadi masalah. Silakan coba lagi.' },
+  vi: { credentials: 'Email hoặc mật khẩu không đúng.', exists: 'Email này đã được đăng ký.', email: 'Vui lòng kiểm tra địa chỉ email.', short: 'Mật khẩu quá ngắn.', tooMany: 'Thao tác quá nhiều lần. Vui lòng đợi một chút rồi thử lại.', generic: 'Đã xảy ra lỗi. Vui lòng thử lại.' },
+  th: { script: /\p{Script=Thai}/u, credentials: 'อีเมลหรือรหัสผ่านไม่ถูกต้อง', exists: 'อีเมลนี้ลงทะเบียนแล้ว', email: 'โปรดตรวจสอบที่อยู่อีเมล', short: 'รหัสผ่านสั้นเกินไป', tooMany: 'ทำรายการบ่อยเกินไป โปรดรอสักครู่แล้วลองอีกครั้ง', generic: 'เกิดข้อผิดพลาด โปรดลองอีกครั้ง' },
+  hi: { script: /\p{Script=Devanagari}/u, credentials: 'ईमेल या पासवर्ड सही नहीं है।', exists: 'यह ईमेल पहले से पंजीकृत है।', email: 'कृपया ईमेल पता जाँचें।', short: 'पासवर्ड बहुत छोटा है।', tooMany: 'बहुत अधिक प्रयास हुए। थोड़ी देर बाद फिर कोशिश करें।', generic: 'कुछ गड़बड़ हो गई। कृपया फिर कोशिश करें।' },
+  ru: { script: /\p{Script=Cyrillic}/u, credentials: 'Неверный адрес почты или пароль.', exists: 'Этот адрес почты уже зарегистрирован.', email: 'Проверьте адрес электронной почты.', short: 'Пароль слишком короткий.', tooMany: 'Слишком много попыток. Подождите немного и попробуйте снова.', generic: 'Что-то пошло не так. Попробуйте ещё раз.' },
+  ar: { script: /\p{Script=Arabic}/u, credentials: 'البريد الإلكتروني أو كلمة المرور غير صحيحة.', exists: 'هذا البريد الإلكتروني مسجّل بالفعل.', email: 'تحقّق من عنوان البريد الإلكتروني.', short: 'كلمة المرور قصيرة جدًا.', tooMany: 'محاولات كثيرة جدًا. انتظر قليلًا ثم حاول مرة أخرى.', generic: 'حدث خطأ ما. حاول مرة أخرى.' },
+  sw: { credentials: 'Barua pepe au nenosiri si sahihi.', exists: 'Barua pepe hii tayari imesajiliwa.', email: 'Tafadhali kagua anwani ya barua pepe.', short: 'Nenosiri ni fupi mno.', tooMany: 'Majaribio mengi mno. Subiri kidogo kisha ujaribu tena.', generic: 'Hitilafu imetokea. Tafadhali jaribu tena.' },
+  ha: { credentials: 'Imel ko kalmar sirri ba daidai ba ne.', exists: 'An riga an yi rajista da wannan imel.', email: 'Da fatan za a duba adireshin imel.', short: 'Kalmar sirri ta yi gajeru sosai.', tooMany: 'Ƙoƙari ya yi yawa. Jira kaɗan sannan a sake gwadawa.', generic: 'An sami matsala. Da fatan za a sake gwadawa.' },
+  ta: { script: /\p{Script=Tamil}/u, credentials: 'மின்னஞ்சல் அல்லது கடவுச்சொல் தவறு.', exists: 'இந்த மின்னஞ்சல் ஏற்கெனவே பதிவுசெய்யப்பட்டுள்ளது.', email: 'மின்னஞ்சல் முகவரியைச் சரிபார்க்கவும்.', short: 'கடவுச்சொல் மிகவும் சிறியது.', tooMany: 'அதிக முயற்சிகள். சிறிது நேரம் கழித்து மீண்டும் முயலவும்.', generic: 'ஏதோ தவறு நடந்தது. மீண்டும் முயலவும்.' },
+  bn: { script: /\p{Script=Bengali}/u, credentials: 'ইমেইল বা পাসওয়ার্ড ঠিক নয়।', exists: 'এই ইমেইলটি আগেই নিবন্ধিত।', email: 'ইমেইল ঠিকানাটি যাচাই করুন।', short: 'পাসওয়ার্ড খুব ছোট।', tooMany: 'অনেকবার চেষ্টা করা হয়েছে। একটু অপেক্ষা করে আবার চেষ্টা করুন।', generic: 'কিছু একটা সমস্যা হয়েছে। আবার চেষ্টা করুন।' },
+}
+
+/** Which of Better Auth's failures this is, by its code or its English words. */
+function authFailure(code: string, message: string): AuthFailure | null {
+  if (code === 'INVALID_EMAIL_OR_PASSWORD' || /(?:invalid|incorrect|wrong) (?:email or password|password)/i.test(message)) return 'credentials'
+  if (code === 'USER_ALREADY_EXISTS' || code === 'USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL' || /user already exists/i.test(message)) return 'exists'
+  if (code === 'INVALID_EMAIL' || /invalid email/i.test(message)) return 'email'
+  if (code === 'PASSWORD_TOO_SHORT' || /password.*(?:too short|at least)/i.test(message)) return 'short'
+  if (code === 'TOO_MANY_REQUESTS' || /too many requests/i.test(message)) return 'tooMany'
+  return null
+}
+
+export function messageOf(error: unknown): string {
+  const code = error && typeof error === 'object' && 'code' in error ? String((error as { code?: unknown }).code ?? '') : ''
   const text =
     error instanceof Error
       ? error.message
@@ -26,7 +63,17 @@ function messageOf(error: unknown): string {
         : error && typeof error === 'object'
           ? String((error as { message?: unknown }).message ?? (error as { statusText?: unknown }).statusText ?? '')
           : ''
-  return text.trim() || 'Something went wrong. Please try again.'
+  const message = text.trim()
+  // Better Auth supplies its own English messages. The app's <html lang> is the source of truth: an English app keeps the
+  // provider's wording, any other language its own.
+  const lang = typeof document !== 'undefined' ? document.documentElement.lang.toLowerCase().split('-')[0] ?? '' : ''
+  const words = AUTH_MESSAGES[lang]
+  if (words) {
+    const failure = authFailure(code, message)
+    if (failure) return words[failure]
+    if (!message || (words.script ? !words.script.test(message) : /^[A-Z][A-Z_]+$/.test(code))) return words.generic
+  }
+  return message || 'Something went wrong. Please try again.'
 }
 
 /**

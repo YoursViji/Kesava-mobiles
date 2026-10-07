@@ -2,7 +2,8 @@ import { createServerFn } from '@tanstack/react-start'
 import { desc, eq } from 'drizzle-orm'
 import { z } from 'zod'
 import { getDb } from '@/lib/db'
-import { serviceBookings, serviceUpdates } from '@/db/schema'
+import { serviceBookings, serviceUpdates, servicePhotos } from '@/db/schema'
+import { storage } from '@/lib/storage'
 import { sendEmail } from '@/lib/email'
 import { currentUser } from '@/lib/session.server'
 import { requireAdmin } from '@/server/admin-guard.server'
@@ -98,6 +99,55 @@ export const createServiceBooking = createServerFn({ method: 'POST' })
     return { id, trackingCode }
   })
 
+export const createServiceBookingWithPhotos = createServerFn({ method: 'POST' })
+  .validator((input: unknown) => {
+    if (!(input instanceof FormData)) throw new Error('Expected booking form')
+    return input
+  })
+  .handler(async ({ data }) => {
+    const raw = data.get('booking')
+    if (typeof raw !== 'string') throw new Error('Booking details are missing')
+    const booking = bookingSchema.parse(JSON.parse(raw))
+    const files = data.getAll('photos')
+    if (files.length > 3) throw new Error('Attach no more than 3 damage photos')
+    const validated: { file: File; bytes: ArrayBuffer }[] = []
+    for (const entry of files) {
+      if (!(entry instanceof File) || !entry.size || entry.size > 5 * 1024 * 1024) throw new Error('Each photo must be between 1 byte and 5 MB')
+      const bytes = await entry.arrayBuffer()
+      const header = new Uint8Array(bytes)
+      const jpeg = entry.type === 'image/jpeg' && header[0] === 255 && header[1] === 216 && header[2] === 255
+      const png = entry.type === 'image/png' && [137, 80, 78, 71, 13, 10, 26, 10].every((v, i) => header[i] === v)
+      const webp = entry.type === 'image/webp' && String.fromCharCode(...header.slice(0, 4)) === 'RIFF' && String.fromCharCode(...header.slice(8, 12)) === 'WEBP'
+      if (!jpeg && !png && !webp) throw new Error('Use a valid JPG, PNG or WebP photo')
+      validated.push({ file: entry, bytes })
+    }
+    const uploaded: { key: string; name: string }[] = []
+    let result: { id: string; trackingCode: string }
+    try {
+      for (const { file, bytes } of validated) {
+        const key = `repairs/damage/${crypto.randomUUID()}`
+        await storage.put(key, bytes, { contentType: file.type })
+        uploaded.push({ key, name: file.name.slice(0, 180) })
+      }
+      result = await createServiceBooking({ data: booking })
+    } catch (error) {
+      await Promise.all(uploaded.map((photo) => storage.delete(photo.key).catch(() => {})))
+      throw error
+    }
+    if (uploaded.length) {
+      try {
+        const db = await getDb()
+        await db.insert(servicePhotos).values(uploaded.map((photo) => ({
+          id: crypto.randomUUID(), bookingId: result.id, storageKey: photo.key, fileName: photo.name, createdAt: new Date().toISOString(),
+        })))
+      } catch {
+        await Promise.all(uploaded.map((photo) => storage.delete(photo.key).catch(() => {})))
+        return { ...result, photoCount: 0, photoWarning: 'Your booking is saved, but the photos could not be attached. Please share them with the store using your tracking code.' }
+      }
+    }
+    return { ...result, photoCount: uploaded.length, photoWarning: null }
+  })
+
 export const getBookingByCode = createServerFn({ method: 'GET' })
   .validator((code: string) => code.trim().toUpperCase())
   .handler(async ({ data: code }) => {
@@ -144,7 +194,11 @@ export const payServiceBooking = createServerFn({ method: 'POST' })
 export const adminListServiceBookings = createServerFn({ method: 'GET' }).handler(async () => {
   await requireAdmin()
   const db = await getDb()
-  return db.select().from(serviceBookings).orderBy(desc(serviceBookings.createdAt))
+  const [bookings, photos] = await Promise.all([
+    db.select().from(serviceBookings).orderBy(desc(serviceBookings.createdAt)),
+    db.select().from(servicePhotos),
+  ])
+  return bookings.map((booking) => ({ ...booking, photos: photos.filter((photo) => photo.bookingId === booking.id).map((photo) => ({ id: photo.id, fileName: photo.fileName, url: `/api/service-photos/${photo.id}` })) }))
 })
 
 const adminUpdateSchema = z.object({
