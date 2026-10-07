@@ -25,7 +25,7 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-40 border-b border-neutral-200 bg-white/95 backdrop-blur">
-      <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3">
+      <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3">
         <Link to="/" className="flex items-center gap-2 shrink-0">
           <img src="/logo.svg" alt="Balaji Mobiles logo" className="h-10 w-10 rounded-xl object-cover ring-1 ring-brand-200" />
           <span className="text-lg font-bold text-neutral-900 leading-tight">
@@ -34,20 +34,7 @@ export function Header() {
           </span>
         </Link>
 
-        <nav className="hidden items-center gap-5 lg:flex">
-          {links.map((l) => (
-            <Link
-              key={l.to}
-              to={l.to}
-              className="whitespace-nowrap text-sm font-medium text-neutral-600 hover:text-brand-600"
-              activeProps={{ className: 'whitespace-nowrap text-sm font-semibold text-brand-600' }}
-            >
-              {l.label}
-            </Link>
-          ))}
-        </nav>
-
-        <div className="hidden items-center gap-2 lg:flex">
+        <div className="hidden items-center gap-2 lg:flex shrink-0">
           <LangSwitch lang={lang} setLang={setLang} />
           <Link to="/cart" className="relative rounded-full border border-neutral-200 p-2.5 text-neutral-700 hover:border-brand-400 hover:text-brand-600">
             <ShoppingBag size={18} />
@@ -65,7 +52,7 @@ export function Header() {
           </a>
           <Link
             to="/admin/login"
-            className="flex items-center gap-1.5 rounded-full border border-neutral-200 px-3 py-2 text-sm font-semibold text-neutral-600 hover:border-brand-400 hover:text-brand-600"
+            className="flex items-center gap-1.5 rounded-full bg-neutral-900 px-4 py-2 text-sm font-bold text-white hover:bg-neutral-700"
           >
             <ShieldCheck size={16} /> Admin
           </Link>
@@ -98,6 +85,21 @@ export function Header() {
           </button>
         </div>
       </div>
+
+      <nav className="hidden border-t border-neutral-100 lg:block">
+        <div className="mx-auto flex max-w-6xl items-center gap-5 overflow-x-auto px-4 py-2">
+          {links.map((l) => (
+            <Link
+              key={l.to}
+              to={l.to}
+              className="whitespace-nowrap text-sm font-medium text-neutral-600 hover:text-brand-600"
+              activeProps={{ className: 'whitespace-nowrap text-sm font-semibold text-brand-600' }}
+            >
+              {l.label}
+            </Link>
+          ))}
+        </div>
+      </nav>
 
       {open ? (
         <div className="border-t border-neutral-200 bg-white px-4 py-3 lg:hidden">
